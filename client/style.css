@@ -1,0 +1,26 @@
+/* Thiết lập cơ bản để loại bỏ lề và thanh cuộn (scrollbars) 
+  khỏi trình duyệt.
+*/
+html,
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    /* Ngăn không cho thanh cuộn xuất hiện */
+    background-color: #333;
+    /* Màu nền tối cho game */
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+/* Thiết lập cho canvas:
+  - 'display: block' để loại bỏ khoảng trống nhỏ bên dưới canvas.
+  - 'width' và 'height' 100% để canvas lấp đầy màn hình.
+*/
+#gameCanvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background-color: #556B2F;
+    /* Màu xanh rêu (olive) làm nền cho map */
+}
