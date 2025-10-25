@@ -7,4 +7,5 @@ export class Bullet {
         this.direction = { x: 0, y: 0 };
         this.speed = 5;
     }
+
 }
