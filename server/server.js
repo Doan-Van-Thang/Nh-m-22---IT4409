@@ -18,6 +18,11 @@ export default class GameServer {
 
     loop() {
         setInterval(() => {
+            this.players.forEach((player) => {
+                player.updateMovement();
+                player.clampToMap(this.mapWidth, this.mapHeight);
+            });
+
             this.updateBullets();
             this.broadcastState();
 

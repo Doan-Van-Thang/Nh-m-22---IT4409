@@ -41,6 +41,11 @@ export default class User{
         else if (InputState.left) this.velocity.x -= this.speed;
         else if (InputState.right) this.velocity.x += this.speed;
         
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+
+        this.velocity.x *= 0.9;
+        this.velocity.y *= 0.9;
         }
 
     clampToMap(mapWidth, mapHeight) {

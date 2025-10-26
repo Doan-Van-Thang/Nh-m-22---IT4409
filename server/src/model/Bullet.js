@@ -1,5 +1,5 @@
 export default class Bullet {
-    constructor(id,x,y,rotation,playerId,speed = 5){
+    constructor(id,x,y,rotation,playerId,speed = 5,radius = 5){
         this.id = id;
         this.x =x;
         this.y=y;
@@ -7,10 +7,11 @@ export default class Bullet {
         this.playerId = playerId;
         this.time = Date.now();
         this.speed = speed;
+        this.radius = this.radius;
     }
 
     update(){ //Update viên đạn theo hướng
-        this.x += Math.cos(this.rotation)*thí.speed;
+        this.x += Math.cos(this.rotation)*this.speed;
         this.y += Math.sin(this.rotation)*this.speed;
     }
 
