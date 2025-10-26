@@ -1,150 +1,123 @@
-import { Tank } from "model/ingame/Tank.js";
+// client/src/Game.js
+
+import { Tank } from "./model/ingame/Tank.js";
 import { GameModes } from "./GameModes.js";
+import { User } from "./model/User.js";
+import { Bullet } from "./model/ingame/Bullet.js";
+import { InputState } from "./InputState.js";
+import { InputHandler } from "./InputHandle.js";
 
 export class Game {
+    // constructor, addUser, start, stop (Giữ nguyên)
     constructor(canvas, ctx) {
         this.canvas = canvas;
         this.ctx = ctx;
-        this.players = {};
-        this.tanks = {};
+        this.users = [];
+        this.tanks = [];
+        this.bullets = [];
         this.mode = GameModes.PVP2;
-    }
-    // Start the game loop as a method so it's valid inside the class
-    startGame() {
-        const loop = () => {
-            update(); // Cập nhật logic
-            draw();   // Vẽ lại màn hình
 
-            // Yêu cầu trình duyệt gọi lại hàm gameLoop ở khung hình (frame) tiếp theo
-            requestAnimationFrame(loop);
-        };
-        loop();
+        this.inputState = new InputState();
+        this.gameLoopId = null;
+
+        this.inputHandler = new InputHandler(this.inputState, this.canvas);
     }
 
+    addUser(user) {
+        this.users.push(user);
+        const tank = new Tank(this.canvas, this.ctx);
+        tank.user = user;
+        this.tanks.push(tank);
+    }
+
+    start() {
+        this.inputHandler.start();
+        this.gameLoop();
+    }
+
+    stop() {
+        this.inputHandler.stop();
+        if (this.gameLoopId) {
+            cancelAnimationFrame(this.gameLoopId);
+        }
+    }
+
+    gameLoop() {
+        this.update();
+        this.draw();
+        this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
+    }
+
+    // Sửa hàm update()
     update() {
-        // TODO: Thêm logic di chuyển cho xe tăng dựa vào 'inputState'
-        // Ví dụ:
-        if (inputState.up) {
-            player.y -= player.speed;
-        }
-        if (inputState.down) {
-            player.y += player.speed;
-        }
-        if (inputState.left) {
-            player.x -= player.speed;
-        }
-        if (inputState.right) {
-            player.x += player.speed;
+        // --- Cập nhật xe tăng ---
+        this.tanks.forEach(tank => {
+            // (Sau này bạn sẽ cần logic để chỉ input cho đúng tank của người chơi)
+
+            // Di chuyển
+            if (this.inputState.up) {
+                tank.position.y -= tank.speed;
+            }
+            if (this.inputState.down) {
+                tank.position.y += tank.speed;
+            }
+            if (this.inputState.left) {
+                tank.position.x -= tank.speed;
+            }
+            if (this.inputState.right) {
+                tank.position.x += tank.speed;
+            }
+
+            // Xoay nòng súng
+            tank.angleTurret = Math.atan2(
+                this.inputState.mouseY - tank.position.y,
+                this.inputState.mouseX - tank.position.x
+            );
+        });
+
+        // --- Logic bắn đạn ---
+        // Nếu người chơi vừa nhấn chuột
+        if (this.inputState.justClicked) {
+            // Lấy xe tăng của người chơi (hiện tại giả sử là tank đầu tiên)
+            const playerTank = this.tanks[0];
+
+            if (playerTank) {
+                // Tạo viên đạn mới từ vị trí và góc bắn của xe tăng
+                const newBullet = new Bullet(
+                    playerTank.position.x,
+                    playerTank.position.y,
+                    playerTank.angleTurret
+                );
+                // Thêm đạn vào danh sách
+                this.bullets.push(newBullet);
+            }
+
+            // Đặt lại cờ để không bắn liên tục 60 lần/giây
+            this.inputState.justClicked = false;
         }
 
-        // TODO: Cập nhật góc nòng súng (angleTurret) để luôn hướng về chuột
-        // Gợi ý: Dùng Math.atan2()
-        player.angleTurret = Math.atan2(inputState.mouseY - player.y, inputState.mouseX - player.x);
+        // --- Cập nhật đạn ---
+        this.bullets.forEach(bullet => {
+            bullet.position.x += bullet.direction.x * bullet.speed;
+            bullet.position.y += bullet.direction.y * bullet.speed;
+        });
+
+        // (Bạn nên thêm logic xóa đạn khi ra khỏi màn hình ở đây)
     }
 
+    // draw() (Giữ nguyên)
     draw() {
-        // 1. Xóa toàn bộ màn hình
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Xóa toàn bộ màn hình
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // 2. TODO: Vẽ xe tăng tại vị trí player.x, player.y
-        // Gợi ý: Dùng ctx.save(), ctx.translate(), ctx.rotate(), ctx.fillRect(), ctx.restore()
+        // Lặp qua tất cả xe tăng và vẽ chúng
+        this.tanks.forEach(tank => {
+            tank.draw();
+        });
 
-        // Vẽ tạm một hình tròn để đại diện cho xe tăng
-        ctx.fillStyle = 'green';
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.width / 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Vẽ tạm nòng súng
-        ctx.strokeStyle = 'darkgreen';
-        ctx.lineWidth = 10;
-        ctx.beginPath();
-        ctx.moveTo(player.x, player.y);
-        ctx.lineTo(
-            player.x + Math.cos(player.angleTurret) * 40, // 40 là chiều dài nòng súng
-            player.y + Math.sin(player.angleTurret) * 40
-        );
-        ctx.stroke();
+        // Lặp qua tất cả đạn và vẽ chúng
+        this.bullets.forEach(bullet => {
+            bullet.draw(this.ctx);
+        });
     }
 }
-
-
-// --- Thiết lập Canvas ---
-
-// Đặt kích thước nội bộ của canvas bằng kích thước cửa sổ
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-// Xử lý khi người dùng thay đổi kích thước cửa sổ
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-});
-
-// --- Trạng thái Game (Client-side) ---
-
-// Đối tượng lưu trữ trạng thái của người chơi (vị trí, góc xoay)
-// Đây là bước đầu để thực hiện Giai đoạn 1
-const player = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    width: 50,
-    height: 40,
-    speed: 1,
-    turnSpeed: 0.05, // Tốc độ xoay thân xe
-    angleBody: 0,    // Góc xoay thân xe (radian)
-    angleTurret: 0,  // Góc xoay nòng súng (radian)
-};
-
-// Đối tượng lưu trữ trạng thái các phím được nhấn
-const inputState = {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-    mouseX: 0,
-    mouseY: 0,
-    shooting: false
-};
-
-// --- Xử lý Input (Đầu vào) ---
-
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'w' || e.key === 'ArrowUp') inputState.up = true;
-    if (e.key === 's' || e.key === 'ArrowDown') inputState.down = true;
-    if (e.key === 'a' || e.key === 'ArrowLeft') inputState.left = true;
-    if (e.key === 'd' || e.key === 'ArrowRight') inputState.right = true;
-});
-
-window.addEventListener('keyup', (e) => {
-    if (e.key === 'w' || e.key === 'ArrowUp') inputState.up = false;
-    if (e.key === 's' || e.key === 'ArrowDown') inputState.down = false;
-    if (e.key === 'a' || e.key === 'ArrowLeft') inputState.left = false;
-    if (e.key === 'd' || e.key === 'ArrowRight') inputState.right = false;
-});
-
-canvas.addEventListener('mousemove', (e) => {
-    inputState.mouseX = e.clientX;
-    inputState.mouseY = e.clientY;
-});
-
-canvas.addEventListener('mousedown', (e) => {
-    inputState.shooting = true;
-});
-
-canvas.addEventListener('mouseup', (e) => {
-    inputState.shooting = false;
-});
-
-
-// --- Game Loop (Vòng lặp Game) ---
-
-// Hàm cập nhật logic game (vật lý, di chuyển)
-
-
-// Hàm vẽ mọi thứ lên canvas
-
-
-
-// --- Khởi động Game ---
-console.log("Client.js đã tải. Bắt đầu game loop...");
