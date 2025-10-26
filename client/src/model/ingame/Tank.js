@@ -25,7 +25,7 @@ export class Tank {
 
     draw() {
         // Vẽ thân xe tăng
-        this.ctx.fillStyle = 'green';
+        this.ctx.fillStyle = 'red';
         this.ctx.beginPath();
         this.ctx.arc(this.position.x, this.position.y, this.size.width / 2, 0, Math.PI * 2);
         this.ctx.fill();
