@@ -6,6 +6,8 @@ import { User } from "./model/User.js";
 import { Bullet } from "./model/ingame/Bullet.js";
 import { InputState } from "./InputState.js";
 import { InputHandler } from "./InputHandle.js";
+import { Map } from "./model/ingame/Map.js";
+import { CheckCollision } from "./CheckCollision.js";
 
 export class Game {
     // constructor, addUser, start, stop (Giữ nguyên)
@@ -21,6 +23,8 @@ export class Game {
         this.gameLoopId = null;
 
         this.inputHandler = new InputHandler(this.inputState, this.canvas);
+
+        this.map = new Map(this.ctx);
     }
 
     addUser(user) {
@@ -54,19 +58,26 @@ export class Game {
         this.tanks.forEach(tank => {
             // (Sau này bạn sẽ cần logic để chỉ input cho đúng tank của người chơi)
 
-            // Di chuyển
-            if (this.inputState.up) {
-                tank.position.y -= tank.speed;
+            // Kiểm tra va chạm trước khi di chuyển
+            const colliding = CheckCollision.isColliding(tank, this.map);
+            console.log("Collision:", colliding);
+
+            // Lưu vị trí cũ để hoàn tác nếu di chuyển gây va chạm
+            const oldX = tank.position.x;
+            const oldY = tank.position.y;
+
+            // Di chuyển theo phím bấm
+            if (this.inputState.up) tank.position.y -= tank.speed;
+            if (this.inputState.down) tank.position.y += tank.speed;
+            if (this.inputState.left) tank.position.x -= tank.speed;
+            if (this.inputState.right) tank.position.x += tank.speed;
+
+            // Nếu sau khi di chuyển mà va chạm => quay lại vị trí cũ
+            if (CheckCollision.isColliding(tank, this.map)) {
+                tank.position.x = oldX;
+                tank.position.y = oldY;
             }
-            if (this.inputState.down) {
-                tank.position.y += tank.speed;
-            }
-            if (this.inputState.left) {
-                tank.position.x -= tank.speed;
-            }
-            if (this.inputState.right) {
-                tank.position.x += tank.speed;
-            }
+
 
             // Xoay nòng súng
             tank.angleTurret = Math.atan2(
@@ -109,6 +120,9 @@ export class Game {
     draw() {
         // Xóa toàn bộ màn hình
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Vẽ bản đồ
+        this.map.draw();
 
         // Lặp qua tất cả xe tăng và vẽ chúng
         this.tanks.forEach(tank => {

@@ -18,6 +18,7 @@ export class Tank {
         this.turnSpeed = 0.05;
         this.angleBody = 0;
         this.angleTurret = 0;
+        this.CheckCollision = false;
     }
 
     draw() {
