@@ -108,12 +108,9 @@ export class Game {
         }
 
         // --- Cập nhật đạn ---
-        this.bullets.forEach(bullet => {
-            bullet.position.x += bullet.direction.x * bullet.speed;
-            bullet.position.y += bullet.direction.y * bullet.speed;
-        });
+        this.bullets.forEach(bullet => bullet.update(this.map, this.canvas));
+        this.bullets = this.bullets.filter(bullet => !bullet.toRemove);
 
-        // (Bạn nên thêm logic xóa đạn khi ra khỏi màn hình ở đây)
     }
 
     // draw() (Giữ nguyên)

@@ -1,4 +1,3 @@
-// client/src/model/ingame/Map.js
 import { Wall } from "./Wall.js";
 
 export class Map {

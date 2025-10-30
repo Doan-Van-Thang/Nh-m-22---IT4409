@@ -1,23 +1,3 @@
-// export class CheckCollision {
-//     static isColliding(tank, map) {
-//         if (!map || !map.walls) return false;
-
-//         for (let wall of map.walls) {
-//             if (
-//                 tank.position.x + tank.radius < wall.x ||
-//                 tank.position.x - tank.radius > wall.x + wall.width ||
-//                 tank.position.y + tank.radius < wall.y ||
-//                 tank.position.y - tank.radius > wall.y + wall.height
-//             ) {
-//                 continue;
-//             } else {
-//                 return true;
-//             }
-//         }
-//         return false;
-//     }
-// }
-
 export class CheckCollision {
     static isColliding(tank, map) {
         for (let wall of map.walls) {
@@ -42,3 +22,5 @@ export class CheckCollision {
         return false;
     }
 }
+
+
