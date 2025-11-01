@@ -7,7 +7,7 @@ export default class Bullet {
         this.playerId = playerId;
         this.time = Date.now();
         this.speed = speed;
-        this.radius = this.radius;
+        this.radius = radius;
     }
 
     update(){ //Update viên đạn theo hướng
