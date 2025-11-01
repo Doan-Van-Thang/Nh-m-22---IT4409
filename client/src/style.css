@@ -1,0 +1,51 @@
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  /* Ngăn không cho thanh cuộn xuất hiện */
+  background-color: #333;
+  /* Màu nền tối cho game */
+  font-family: Arial, sans-serif;
+  color: white;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Style cho canvas bây giờ sẽ được quản lý bởi
+  component GameView.jsx
+*/
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #556B2F;
+  /* Màu xanh rêu (olive) làm nền cho map */
+}
+
+/* Thêm style cho các nút UI */
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 20px;
+}
+
+.menu-button {
+  padding: 15px 30px;
+  font-size: 24px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.menu-button:hover {
+  background-color: #45a049;
+}

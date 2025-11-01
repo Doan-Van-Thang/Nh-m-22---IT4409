@@ -1,4 +1,3 @@
-// Sửa đường dẫn: từ 'User.js' thành '../User.js'
 import { User } from "../User.js";
 
 export class Tank {

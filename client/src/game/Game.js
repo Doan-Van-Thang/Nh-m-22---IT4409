@@ -1,11 +1,9 @@
-// client/src/Game.js
-
 import { Tank } from "./model/ingame/Tank.js";
 import { GameModes } from "./GameModes.js";
 import { User } from "./model/User.js";
 import { Bullet } from "./model/ingame/Bullet.js";
 import { InputState } from "./InputState.js";
-import { InputHandler } from "./InputHandle.js";
+import { InputHandler } from "./InputHandler.js";
 
 export class Game {
     // constructor, addUser, start, stop (Giữ nguyên)
@@ -20,41 +18,52 @@ export class Game {
         this.inputState = new InputState();
         this.gameLoopId = null;
 
+        // Truyền canvas vào InputHandler
         this.inputHandler = new InputHandler(this.inputState, this.canvas);
     }
 
     addUser(user) {
         this.users.push(user);
+        // Truyền canvas và ctx cho Tank
         const tank = new Tank(this.canvas, this.ctx);
         tank.user = user;
+        // Đặt vị trí ban đầu (lấy từ Tank.js)
+        tank.position = {
+            x: this.canvas.width / 2,
+            y: this.canvas.height / 2,
+        };
         this.tanks.push(tank);
     }
 
     start() {
-        this.inputHandler.start();
-        this.gameLoop();
+        console.log("Game Logic: Starting...");
+        this.inputHandler.start(); // Gắn event listener
+        this.gameLoop(); // Bắt đầu vòng lặp
     }
 
     stop() {
-        this.inputHandler.stop();
+        console.log("Game Logic: Stopping...");
+        this.inputHandler.stop(); // Gỡ event listener
         if (this.gameLoopId) {
             cancelAnimationFrame(this.gameLoopId);
+            this.gameLoopId = null;
         }
     }
 
     gameLoop() {
+        // Bind 'this' và lưu ID
+        this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
+        // Cập nhật và vẽ
         this.update();
         this.draw();
-        this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
     }
 
-    // Sửa hàm update()
     update() {
         // --- Cập nhật xe tăng ---
+        // TODO: Logic này sẽ được thay thế bằng việc nhận state từ Server
         this.tanks.forEach(tank => {
-            // (Sau này bạn sẽ cần logic để chỉ input cho đúng tank của người chơi)
-
             // Di chuyển
+            // (Giữ nguyên logic client-side của bạn để test)
             if (this.inputState.up) {
                 tank.position.y -= tank.speed;
             }
@@ -76,23 +85,16 @@ export class Game {
         });
 
         // --- Logic bắn đạn ---
-        // Nếu người chơi vừa nhấn chuột
         if (this.inputState.justClicked) {
-            // Lấy xe tăng của người chơi (hiện tại giả sử là tank đầu tiên)
             const playerTank = this.tanks[0];
-
             if (playerTank) {
-                // Tạo viên đạn mới từ vị trí và góc bắn của xe tăng
                 const newBullet = new Bullet(
                     playerTank.position.x,
                     playerTank.position.y,
                     playerTank.angleTurret
                 );
-                // Thêm đạn vào danh sách
                 this.bullets.push(newBullet);
             }
-
-            // Đặt lại cờ để không bắn liên tục 60 lần/giây
             this.inputState.justClicked = false;
         }
 
@@ -102,20 +104,16 @@ export class Game {
             bullet.position.y += bullet.direction.y * bullet.speed;
         });
 
-        // (Bạn nên thêm logic xóa đạn khi ra khỏi màn hình ở đây)
+        // TODO: Xóa đạn khi ra khỏi màn hình
     }
 
-    // draw() (Giữ nguyên)
     draw() {
-        // Xóa toàn bộ màn hình
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Lặp qua tất cả xe tăng và vẽ chúng
         this.tanks.forEach(tank => {
             tank.draw();
         });
 
-        // Lặp qua tất cả đạn và vẽ chúng
         this.bullets.forEach(bullet => {
             bullet.draw(this.ctx);
         });

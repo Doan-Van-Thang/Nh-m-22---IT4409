@@ -47,8 +47,10 @@ export class InputHandler {
     }
 
     handleMouseMove(e) {
-        this.inputState.mouseX = e.clientX;
-        this.inputState.mouseY = e.clientY;
+        const rect = this.canvas.getBoundingClientRect();
+
+        this.inputState.mouseX = e.clientX - rect.left;
+        this.inputState.mouseY = e.clientY - rect.top;
     }
 
     // Sửa logic nhấn chuột

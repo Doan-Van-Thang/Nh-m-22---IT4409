@@ -2,16 +2,24 @@
 <html lang="vi">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Game Tank 2D - Bài tập lớn</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Tank 2D - React Client</title>
 </head>
 
 <body>
-  <canvas id="gameCanvas"></canvas>
+    <!-- 
+      Đây là file index.html MỚI.
+      Nó chỉ chứa 1 thẻ div "root".
+      React sẽ tự động render Menu hoặc Game vào đây.
+    -->
+    <div id="root"></div>
 
-  <script src="client.js" type="module" defer></script>
+    <!-- 
+      File main.jsx sẽ được Vite tự động nhúng vào đây khi chạy.
+      Bạn không cần trỏ trực tiếp 'style.css' hay 'client.js' nữa.
+    -->
+    <script type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>
