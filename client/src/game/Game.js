@@ -4,6 +4,8 @@ import { User } from "./model/User.js";
 import { Bullet } from "./model/ingame/Bullet.js";
 import { InputState } from "./InputState.js";
 import { InputHandler } from "./InputHandler.js";
+import { Map } from "./model/ingame/Map.js";
+import { CheckCollision } from "./CheckCollision.js";
 
 export class Game {
     // constructor, addUser, start, stop (Giữ nguyên)
@@ -20,6 +22,8 @@ export class Game {
 
         // Truyền canvas vào InputHandler
         this.inputHandler = new InputHandler(this.inputState, this.canvas);
+
+        this.map = new Map(this.ctx);
     }
 
     addUser(user) {
@@ -62,20 +66,28 @@ export class Game {
         // --- Cập nhật xe tăng ---
         // TODO: Logic này sẽ được thay thế bằng việc nhận state từ Server
         this.tanks.forEach(tank => {
-            // Di chuyển
-            // (Giữ nguyên logic client-side của bạn để test)
-            if (this.inputState.up) {
-                tank.position.y -= tank.speed;
+            // (Sau này bạn sẽ cần logic để chỉ input cho đúng tank của người chơi)
+
+            // Kiểm tra va chạm trước khi di chuyển
+            const colliding = CheckCollision.isColliding(tank, this.map);
+            console.log("Collision:", colliding);
+
+            // Lưu vị trí cũ để hoàn tác nếu di chuyển gây va chạm
+            const oldX = tank.position.x;
+            const oldY = tank.position.y;
+
+            // Di chuyển theo phím bấm
+            if (this.inputState.up) tank.position.y -= tank.speed;
+            if (this.inputState.down) tank.position.y += tank.speed;
+            if (this.inputState.left) tank.position.x -= tank.speed;
+            if (this.inputState.right) tank.position.x += tank.speed;
+
+            // Nếu sau khi di chuyển mà va chạm => quay lại vị trí cũ
+            if (CheckCollision.isColliding(tank, this.map)) {
+                tank.position.x = oldX;
+                tank.position.y = oldY;
             }
-            if (this.inputState.down) {
-                tank.position.y += tank.speed;
-            }
-            if (this.inputState.left) {
-                tank.position.x -= tank.speed;
-            }
-            if (this.inputState.right) {
-                tank.position.x += tank.speed;
-            }
+
 
             // Xoay nòng súng
             tank.angleTurret = Math.atan2(
@@ -99,16 +111,19 @@ export class Game {
         }
 
         // --- Cập nhật đạn ---
-        this.bullets.forEach(bullet => {
-            bullet.position.x += bullet.direction.x * bullet.speed;
-            bullet.position.y += bullet.direction.y * bullet.speed;
-        });
+        this.bullets.forEach(bullet => bullet.update(this.map, this.canvas));
+        this.bullets = this.bullets.filter(bullet => !bullet.toRemove);
 
-        // TODO: Xóa đạn khi ra khỏi màn hình
     }
 
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Vẽ bản đồ
+        this.map.draw();
+
+        // Vẽ bản đồ
+        this.map.draw();
 
         this.tanks.forEach(tank => {
             tank.draw();

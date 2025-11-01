@@ -12,21 +12,19 @@ export class Tank {
             x: this.canvas.width / 2,
             y: this.canvas.height / 2,
         };
-        this.size = {
-            width: 50,
-            height: 40,
-        };
+        this.radius = 25;
         this.speed = 1;
         this.turnSpeed = 0.05;
         this.angleBody = 0;
         this.angleTurret = 0;
+        // this.CheckCollision = false;
     }
 
     draw() {
         // Vẽ thân xe tăng
-        this.ctx.fillStyle = 'green';
+        this.ctx.fillStyle = 'red';
         this.ctx.beginPath();
-        this.ctx.arc(this.position.x, this.position.y, this.size.width / 2, 0, Math.PI * 2);
+        this.ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
         // Vẽ tháp pháo
         this.ctx.strokeStyle = 'darkgreen';
