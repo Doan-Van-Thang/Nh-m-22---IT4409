@@ -33,14 +33,11 @@ function GameView({ navigateTo, SCREENS }) {
         console.log("GameView: Khởi tạo Game...");
         gameInstanceRef.current = new Game(canvas, ctx);
 
-        // 2. Tạo một user giả để test (lấy từ client.js cũ)
-        const localPlayer = new User();
-        localPlayer.id = "local";
-        localPlayer.name = "Player 1";
-        gameInstanceRef.current.addUser(localPlayer); // Thêm user
+        // 2. (ĐÃ XÓA USER GIẢ)
+        // Server sẽ tự động tạo user khi client kết nối.
 
         // 3. Bắt đầu game
-        gameInstanceRef.current.start();
+        gameInstanceRef.current.start(); // Bây giờ hàm này sẽ chạy
         console.log("GameView: Game đã bắt đầu.");
 
         // 4. Hàm "Dọn dẹp" (Cleanup)

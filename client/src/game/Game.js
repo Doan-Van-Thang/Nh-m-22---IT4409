@@ -2,7 +2,7 @@ import { Tank } from "./model/ingame/Tank.js";
 import { Bullet } from "./model/ingame/Bullet.js";
 import { InputState } from "./InputState.js";
 import { InputHandler } from "./InputHandler.js";
-import { Map } from "./model/ingame/Map.js";
+import { Map as GameMap } from "./model/ingame/Map.js"; // Đổi tên thành GameMap
 // BỎ: import { CheckCollision } from "./CheckCollision.js"; (Server sẽ làm việc này)
 
 // IMPORT LỚP MỚI
@@ -25,8 +25,10 @@ export class Game {
         this.inputHandler = new InputHandler(this.inputState, this.canvas);
 
         // --- MAP & VÒNG LẶP ---
-        this.map = new Map(this.ctx); // Map vẫn do client vẽ
+        this.map = new GameMap(this.ctx); // Map vẫn do client vẽ
         this.gameLoopId = null;
+        this.camX = 0; // [THÊM DÒNG NÀY]
+        this.camY = 0; // [THÊM DÒNG NÀY]
 
         // --- KẾT NỐI MẠNG ---
         // Giả sử server chạy trên cổng 8080 (bạn của bạn cần xác nhận)
@@ -65,10 +67,10 @@ export class Game {
         }
 
         // Server gửi thông tin map
+        // Server gửi thông tin map
         if (data.type === 'mapData') {
-            // TODO: Cập nhật Map.js với các vật cản (obstacles) từ server
-            // this.map.updateObstacles(data.obstacles);
-            console.log("Đã nhận dữ liệu map", data.obstacles);
+            // [SỬA] Gửi toàn bộ 'data' (bao gồm width, height, obstacles)
+            this.map.updateMapData(data);
             return;
         }
 
@@ -136,9 +138,21 @@ export class Game {
         const playerTank = this.tanks.get(this.myPlayerId);
         let turretAngle = 0;
         if (playerTank) {
+            // [SỬA] Giờ (x, y) là TÂM rồi, không cần tính centerX, centerY
+            const { x, y } = playerTank.state;
+
+            // Camera giờ sẽ căn giữa vào TÂM (x, y)
+            this.camX = x - this.canvas.width / 2;
+            this.camY = y - this.canvas.height / 2;
+
+            // Chuyển tọa độ chuột (Giữ nguyên)
+            const worldMouseX = this.inputState.mouseX + this.camX;
+            const worldMouseY = this.inputState.mouseY + this.camY;
+
+            // [SỬA] Tính góc xoay từ TÂM (x, y)
             turretAngle = Math.atan2(
-                this.inputState.mouseY - playerTank.state.y,
-                this.inputState.mouseX - playerTank.state.x
+                worldMouseY - y, // Chỉ dùng y
+                worldMouseX - x  // Chỉ dùng x
             );
         }
 
@@ -158,20 +172,30 @@ export class Game {
     }
 
     draw() {
+        // 1. Vẽ nền (Giữ nguyên)
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = '#556B2F'; // Màu xanh rêu
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Vẽ bản đồ
+        // 2. [SỬA LẠI] Áp dụng "di chuyển" camera
+        // (Dùng this.camX, this.camY đã tính trong update)
+        this.ctx.save();
+        this.ctx.translate(-this.camX, -this.camY);
+
+        // 3. Vẽ bản đồ (tường)
         this.map.draw();
 
-        // --- LOGIC VẼ MỚI ---
-        // Chỉ vẽ dựa trên trạng thái server gửi về
-
+        // 4. Vẽ đạn
         this.bullets.forEach(bullet => {
             bullet.draw(this.ctx);
         });
 
+        // 5. Vẽ xe tăng
         this.tanks.forEach(tank => {
             tank.draw(this.ctx);
         });
+
+        // 6. [SỬA LẠI] Khôi phục lại canvas
+        this.ctx.restore();
     }
 }

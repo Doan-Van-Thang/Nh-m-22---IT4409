@@ -25,7 +25,7 @@ export class Bullet {
     draw() {
         const { x, y, radius } = this.state;
 
-        this.ctx.fillStyle = "red";
+        this.ctx.fillStyle = "yellow";
         this.ctx.beginPath();
         this.ctx.arc(x, y, radius, 0, Math.PI * 2);
         this.ctx.fill();

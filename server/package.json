@@ -1,0 +1,14 @@
+{
+    "name": "tank-game-server",
+    "version": "1.0.0",
+    "description": "Server cho dự án Game Tank 2D",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "author": "Nhom 22 - IT4409",
+    "dependencies": {
+        "ws": "^8.17.1"
+    }
+}
