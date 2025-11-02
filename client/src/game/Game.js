@@ -1,119 +1,160 @@
 import { Tank } from "./model/ingame/Tank.js";
-import { GameModes } from "./GameModes.js";
-import { User } from "./model/User.js";
 import { Bullet } from "./model/ingame/Bullet.js";
 import { InputState } from "./InputState.js";
 import { InputHandler } from "./InputHandler.js";
 import { Map } from "./model/ingame/Map.js";
-import { CheckCollision } from "./CheckCollision.js";
+// BỎ: import { CheckCollision } from "./CheckCollision.js"; (Server sẽ làm việc này)
+
+// IMPORT LỚP MỚI
+import { SocketClient } from "./SocketClient.js";
 
 export class Game {
-    // constructor, addUser, start, stop (Giữ nguyên)
     constructor(canvas, ctx) {
         this.canvas = canvas;
         this.ctx = ctx;
-        this.users = [];
-        this.tanks = [];
-        this.bullets = [];
-        this.mode = GameModes.PVP2;
 
+        // --- CẤU TRÚC LƯU TRỮ TRẠNG THÁI ---
+        // Chúng ta không dùng mảng nữa, mà dùng Map để truy cập bằng ID
+        this.tanks = new Map();
+        this.bullets = new Map();
+        // ID của người chơi này, sẽ được server cấp
+        this.myPlayerId = null;
+
+        // --- INPUT ---
         this.inputState = new InputState();
-        this.gameLoopId = null;
-
-        // Truyền canvas vào InputHandler
         this.inputHandler = new InputHandler(this.inputState, this.canvas);
 
-        this.map = new Map(this.ctx);
+        // --- MAP & VÒNG LẶP ---
+        this.map = new Map(this.ctx); // Map vẫn do client vẽ
+        this.gameLoopId = null;
+
+        // --- KẾT NỐI MẠNG ---
+        // Giả sử server chạy trên cổng 8080 (bạn của bạn cần xác nhận)
+        this.socket = new SocketClient('ws://localhost:8080');
+        this.socket.addMessageListener(this.handleServerMessage.bind(this));
     }
 
-    addUser(user) {
-        this.users.push(user);
-        // Truyền canvas và ctx cho Tank
-        const tank = new Tank(this.canvas, this.ctx);
-        tank.user = user;
-        // Đặt vị trí ban đầu (lấy từ Tank.js)
-        tank.position = {
-            x: this.canvas.width / 2,
-            y: this.canvas.height / 2,
-        };
-        this.tanks.push(tank);
-    }
+    // BỎ: addUser(user) - Server sẽ quản lý việc này
 
     start() {
         console.log("Game Logic: Starting...");
-        this.inputHandler.start(); // Gắn event listener
-        this.gameLoop(); // Bắt đầu vòng lặp
+        this.inputHandler.start();
+        this.socket.connect(); // Kết nối tới server
+        this.gameLoop();
     }
 
     stop() {
         console.log("Game Logic: Stopping...");
-        this.inputHandler.stop(); // Gỡ event listener
+        this.inputHandler.stop();
+        this.socket.close(); // Ngắt kết nối
         if (this.gameLoopId) {
             cancelAnimationFrame(this.gameLoopId);
             this.gameLoopId = null;
         }
     }
 
+    // HÀM MỚI: Xử lý tin nhắn từ server
+    handleServerMessage(data) {
+        // Server sẽ gửi tin nhắn `playerId` khi kết nối
+        if (data.type === 'playerId') {
+            this.myPlayerId = data.playerId;
+            console.log("Server đã cấp ID:", this.myPlayerId);
+            // Gửi tin nhắn kích hoạt player (giống logic server của bạn)
+            this.socket.send({ type: "activatePlayer" });
+            return;
+        }
+
+        // Server gửi thông tin map
+        if (data.type === 'mapData') {
+            // TODO: Cập nhật Map.js với các vật cản (obstacles) từ server
+            // this.map.updateObstacles(data.obstacles);
+            console.log("Đã nhận dữ liệu map", data.obstacles);
+            return;
+        }
+
+        // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
+        if (data.type === 'update') {
+            const { players, bullets } = data;
+
+            // --- Đồng bộ hóa XE TĂNG ---
+            const seenTankIds = new Set();
+            players.forEach(playerState => {
+                seenTankIds.add(playerState.id);
+                if (!this.tanks.has(playerState.id)) {
+                    // Nếu là xe tăng mới, tạo và thêm vào
+                    const newTank = new Tank(this.ctx);
+                    this.tanks.set(playerState.id, newTank);
+                }
+                // Cập nhật trạng thái của xe tăng
+                this.tanks.get(playerState.id).updateState(playerState);
+            });
+            // Xóa các xe tăng đã ngắt kết nối
+            this.tanks.forEach((tank, id) => {
+                if (!seenTankIds.has(id)) {
+                    this.tanks.delete(id);
+                }
+            });
+
+            // --- Đồng bộ hóa ĐẠN ---
+            const seenBulletIds = new Set();
+            bullets.forEach(bulletState => {
+                seenBulletIds.add(bulletState.id);
+                if (!this.bullets.has(bulletState.id)) {
+                    this.bullets.set(bulletState.id, new Bullet(this.ctx));
+                }
+                this.bullets.get(bulletState.id).updateState(bulletState);
+            });
+            // Xóa các viên đạn đã biến mất
+            this.bullets.forEach((bullet, id) => {
+                if (!seenBulletIds.has(id)) {
+                    this.bullets.delete(id);
+                }
+            });
+        }
+    }
+
     gameLoop() {
-        // Bind 'this' và lưu ID
         this.gameLoopId = requestAnimationFrame(this.gameLoop.bind(this));
-        // Cập nhật và vẽ
         this.update();
         this.draw();
     }
 
     update() {
-        // --- Cập nhật xe tăng ---
-        // TODO: Logic này sẽ được thay thế bằng việc nhận state từ Server
-        this.tanks.forEach(tank => {
-            // (Sau này bạn sẽ cần logic để chỉ input cho đúng tank của người chơi)
+        // --- LOGIC CŨ (ĐÃ XÓA) ---
+        // (Xóa toàn bộ logic di chuyển xe tăng)
+        // (Xóa toàn bộ logic cập nhật đạn)
 
-            // Kiểm tra va chạm trước khi di chuyển
-            const colliding = CheckCollision.isColliding(tank, this.map);
-            console.log("Collision:", colliding);
+        // --- LOGIC MỚI: GỬI INPUT LÊN SERVER ---
 
-            // Lưu vị trí cũ để hoàn tác nếu di chuyển gây va chạm
-            const oldX = tank.position.x;
-            const oldY = tank.position.y;
+        // Gửi trạng thái phím bấm VÀ góc xoay nòng súng
+        // TODO: Bạn và server cần thống nhất cấu trúc gửi đi
+        // Server của bạn [server/server.js] đang mong chờ 
+        // 1. Gói tin 'update' với data (x, y, rotation) -> Gói tin này nên là 'input'
+        // 2. Gói tin 'fire'
 
-            // Di chuyển theo phím bấm
-            if (this.inputState.up) tank.position.y -= tank.speed;
-            if (this.inputState.down) tank.position.y += tank.speed;
-            if (this.inputState.left) tank.position.x -= tank.speed;
-            if (this.inputState.right) tank.position.x += tank.speed;
-
-            // Nếu sau khi di chuyển mà va chạm => quay lại vị trí cũ
-            if (CheckCollision.isColliding(tank, this.map)) {
-                tank.position.x = oldX;
-                tank.position.y = oldY;
-            }
-
-
-            // Xoay nòng súng
-            tank.angleTurret = Math.atan2(
-                this.inputState.mouseY - tank.position.y,
-                this.inputState.mouseX - tank.position.x
+        // Tính toán góc nòng súng (vẫn cần ở client)
+        const playerTank = this.tanks.get(this.myPlayerId);
+        let turretAngle = 0;
+        if (playerTank) {
+            turretAngle = Math.atan2(
+                this.inputState.mouseY - playerTank.state.y,
+                this.inputState.mouseX - playerTank.state.x
             );
-        });
-
-        // --- Logic bắn đạn ---
-        if (this.inputState.justClicked) {
-            const playerTank = this.tanks[0];
-            if (playerTank) {
-                const newBullet = new Bullet(
-                    playerTank.position.x,
-                    playerTank.position.y,
-                    playerTank.angleTurret
-                );
-                this.bullets.push(newBullet);
-            }
-            this.inputState.justClicked = false;
         }
 
-        // --- Cập nhật đạn ---
-        this.bullets.forEach(bullet => bullet.update(this.map, this.canvas));
-        this.bullets = this.bullets.filter(bullet => !bullet.toRemove);
+        // Gửi gói tin input (nên thống nhất với server tên là 'input')
+        // Gửi tạm 'update' theo code server
+        this.socket.send({
+            type: "update",
+            input: this.inputState, // Gửi trạng thái phím
+            rotation: turretAngle  // Gửi góc nòng súng
+        });
 
+        // Gửi gói tin bắn
+        if (this.inputState.justClicked) {
+            this.socket.send({ type: "fire" });
+            this.inputState.justClicked = false; // Reset cờ
+        }
     }
 
     draw() {
@@ -122,15 +163,15 @@ export class Game {
         // Vẽ bản đồ
         this.map.draw();
 
-        // Vẽ bản đồ
-        this.map.draw();
-
-        this.tanks.forEach(tank => {
-            tank.draw();
-        });
+        // --- LOGIC VẼ MỚI ---
+        // Chỉ vẽ dựa trên trạng thái server gửi về
 
         this.bullets.forEach(bullet => {
             bullet.draw(this.ctx);
+        });
+
+        this.tanks.forEach(tank => {
+            tank.draw(this.ctx);
         });
     }
 }
