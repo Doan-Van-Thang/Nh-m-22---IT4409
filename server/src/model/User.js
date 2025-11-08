@@ -84,4 +84,15 @@ export default class User {
         this.x = Math.max(this.radius, Math.min(mapWidth - this.radius, this.x));
         this.y = Math.max(this.radius, Math.min(mapHeight - this.radius, this.y));
     }
+
+    respawn(x, y) {
+        this.x = x;
+        this.y = y;
+        this.health = 100;
+        this.level = 1;
+        this.kills = 0;
+        this.radius = 25; // Reset về bán kính gốc
+        this.velocity = { x: 0, y: 0 };
+        this.active = true; // Kích hoạt lại
+    }
 }

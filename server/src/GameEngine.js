@@ -23,7 +23,7 @@ export default class GameEngine {
     loop() {
         // Cập nhật theo thứ tự
         this.playerManager.update();
-        this.bulletManager.update();
+        this.bulletManager.update(this.playerManager);
         // (World không cần update)
     }
 

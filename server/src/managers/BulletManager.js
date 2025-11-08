@@ -13,19 +13,19 @@ export default class BulletManager {
         this.bullets.set(bullet.id, bullet);
     }
 
-    update() {
+    update(playerManager) {
         const { mapWidth, mapHeight, obstacles } = this.world;
 
         this.bullets.forEach((bullet, id) => {
             bullet.update();
 
-            // Kiểm tra ra ngoài biên
+            // Kiểm tra ra ngoài biên (như cũ)
             if (bullet.isExpired() || bullet.isOutofBounds(mapWidth, mapHeight)) {
                 this.bullets.delete(id);
                 return;
             }
 
-            // Kiểm tra va chạm vật cản
+            // Kiểm tra va chạm vật cản (như cũ)
             for (const obs of obstacles) {
                 if (collides(bullet, obs)) {
                     this.bullets.delete(id);
@@ -33,7 +33,44 @@ export default class BulletManager {
                 }
             }
 
-            // (TODO: Thêm va chạm đạn với người chơi ở đây)
+            // --- [THÊM MỚI] KIỂM TRA VA CHẠM VỚI NGƯỜI CHƠI ---
+
+            // Lấy danh sách người chơi từ playerManager
+            const players = playerManager ? playerManager.players : null;
+            if (!players) return; // Nếu chưa có người chơi thì thôi
+
+            for (const player of players.values()) {
+                // 1. Bỏ qua nếu người chơi chưa active
+                if (!player.active) continue;
+
+                // 2. Bỏ qua nếu đạn là của chính người chơi đó
+                if (bullet.playerId === player.id) continue;
+
+                // 3. Kiểm tra va chạm
+                if (collides(bullet, player)) {
+                    // Có va chạm!
+                    player.takeDamage(10); // Giả sử 1 viên đạn 10 damage
+
+                    // Xóa viên đạn
+                    this.bullets.delete(id);
+
+                    // Kiểm tra xem người chơi có chết không
+                    if (player.isDead()) {
+                        // Tìm người bắn (shooter)
+                        const shooter = players.get(bullet.playerId);
+                        if (shooter) {
+                            shooter.levelUp(); // Tăng kill/level cho người bắn
+                        }
+
+                        // Hồi sinh người chơi đã chết
+                        playerManager.respawnPlayer(player);
+                    }
+
+                    // Vì đạn đã nổ, không cần kiểm tra tiếp
+                    return;
+                }
+            }
+            // --- KẾT THÚC PHẦN THÊM MỚI ---
         });
     }
 

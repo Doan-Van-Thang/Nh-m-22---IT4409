@@ -13,6 +13,7 @@ export class Tank {
     }
 
     updateState(serverState) {
+        console.log(`[CLIENT] Received health ${serverState.health} for tank ${serverState.id}`);
         this.state.id = serverState.id;
         this.state.x = serverState.x;
         this.state.y = serverState.y;
@@ -51,6 +52,30 @@ export class Tank {
         );
         this.ctx.stroke();
 
-        // TODO: Vẽ thanh máu dựa trên this.state.health
+        // --- [THÊM MỚI] VẼ THANH MÁU ---
+        if (health <= 100) { // Chỉ vẽ nếu không đầy máu
+
+            console.log(`[DRAW] Drawing health bar with health: ${health}`);
+            const barWidth = radius * 2;
+            const barHeight = 8;
+            const barX = x - radius;
+            const barY = y - radius - 15; // 15px phía trên xe tăng
+
+            // [BƯỚC 3] VẼ VIỀN (VẼ SAU CÙNG ĐỂ NỔI LÊN TRÊN)
+            this.ctx.strokeStyle = '#333';
+            this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+            // [BƯỚC 1] VẼ NỀN (MÀU ĐỎ)
+            this.ctx.fillStyle = '#dc3545'; // Màu đỏ đậm
+            this.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+            // [BƯỚC 2] VẼ MÁU HIỆN TẠI (MÀU XANH)
+            const healthPercent = health / 100;
+            this.ctx.fillStyle = '#28a745'; // Màu xanh lá
+            this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+
+
+        }
+        // --- KẾT THÚC PHẦN THÊM MỚI ---
     }
 }

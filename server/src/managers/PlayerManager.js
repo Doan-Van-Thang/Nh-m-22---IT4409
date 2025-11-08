@@ -54,15 +54,31 @@ export default class PlayerManager {
         }
     }
 
+    respawnPlayer(player) {
+        if (!player) return;
+        const spawn = this.world.getRandomSpawn();
+        player.respawn(spawn.x, spawn.y);
+        console.log(`[PlayerManager] Người chơi ${player.id} đã hồi sinh.`);
+    }
+
     getState() {
-        return Array.from(this.players.values()).map((p) => ({
-            id: p.id,
-            x: p.x,
-            y: p.y,
-            rotation: p.rotation,
-            health: p.health,
-            level: p.level,
-            radius: p.radius, // [SỬA] Thay thế width/height bằng radius
-        }));
+        return Array.from(this.players.values()).map((p) => {
+
+            // --- [THÊM DÒNG NÀY ĐỂ DEBUG] ---
+            if (p.health < 100) {
+                console.log(`[SERVER] Sending player ${p.id} health: ${p.health}`);
+            }
+            // --- [HẾT PHẦN THÊM] ---
+
+            return {
+                id: p.id,
+                x: p.x,
+                y: p.y,
+                rotation: p.rotation,
+                health: p.health, //
+                level: p.level,
+                radius: p.radius,
+            };
+        });
     }
 }
