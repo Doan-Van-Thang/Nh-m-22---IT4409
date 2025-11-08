@@ -157,13 +157,22 @@ export class Game {
             );
         }
 
+        if (!this.lastSentAngle) this.lastSentAngle = 0;
+
+        const angleChanged = Math.abs(turretAngle - this.lastSentAngle) > 0.05;
+
         // Gửi gói tin input (nên thống nhất với server tên là 'input')
         // Gửi tạm 'update' theo code server
-        this.socket.send({
-            type: "update",
-            input: this.inputState, // Gửi trạng thái phím
-            rotation: turretAngle  // Gửi góc nòng súng
-        });
+        if (this.inputHandler.inputStateChanged || angleChanged) {
+            this.socket.send({
+                type: "update",
+                input: this.inputState, // Gửi trạng thái phím
+                rotation: turretAngle  // Gửi góc nòng súng
+            });
+
+            this.lastSentAngle = turretAngle; // Lưu lại góc đã gửi
+            this.inputHandler.inputStateChanged = false; // [QUAN TRỌNG] Reset cờ hiệu
+        }
 
         // Gửi gói tin bắn
         if (this.inputState.justClicked) {

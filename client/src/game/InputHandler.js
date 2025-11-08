@@ -5,12 +5,26 @@ export class InputHandler {
         this.inputState = inputState;
         this.canvas = canvas;
 
+        this.inputStateChanged = false;
+
+
         // Bind 'this' (Giữ nguyên)
         this.boundHandleKeyDown = this.handleKeyDown.bind(this);
         this.boundHandleKeyUp = this.handleKeyUp.bind(this);
         this.boundHandleMouseMove = this.handleMouseMove.bind(this);
         this.boundHandleMouseDown = this.handleMouseDown.bind(this);
         this.boundHandleMouseUp = this.handleMouseUp.bind(this);
+
+        this.previousInputState = JSON.stringify(this.inputState);
+    }
+
+    hasInputChanged() {
+        const currentState = JSON.stringify(this.inputState);
+        if (currentState !== this.previousInputState) {
+            this.previousInputState = currentState;
+            return true;
+        }
+        return false;
     }
 
     // Gắn các trình nghe sự kiện (Giữ nguyên)
@@ -33,17 +47,51 @@ export class InputHandler {
 
     // --- Các hàm xử lý input ---
     handleKeyDown(e) {
-        if (e.key === 'w' || e.key === 'ArrowUp') this.inputState.up = true;
-        if (e.key === 's' || e.key === 'ArrowDown') this.inputState.down = true;
-        if (e.key === 'a' || e.key === 'ArrowLeft') this.inputState.left = true;
-        if (e.key === 'd' || e.key === 'ArrowRight') this.inputState.right = true;
+        let changed = false;
+        if ((e.key === 'w' || e.key === 'ArrowUp') && !this.inputState.up) {
+            this.inputState.up = true;
+            changed = true;
+        }
+        if ((e.key === 's' || e.key === 'ArrowDown') && !this.inputState.down) {
+            this.inputState.down = true;
+            changed = true;
+        }
+        if ((e.key === 'a' || e.key === 'ArrowLeft') && !this.inputState.left) {
+            this.inputState.left = true;
+            changed = true;
+        }
+        if ((e.key === 'd' || e.key === 'ArrowRight') && !this.inputState.right) {
+            this.inputState.right = true;
+            changed = true;
+        }
+
+        if (changed) {
+            this.inputStateChanged = true;
+        }
+
     }
 
     handleKeyUp(e) {
-        if (e.key === 'w' || e.key === 'ArrowUp') this.inputState.up = false;
-        if (e.key === 's' || e.key === 'ArrowDown') this.inputState.down = false;
-        if (e.key === 'a' || e.key === 'ArrowLeft') this.inputState.left = false;
-        if (e.key === 'd' || e.key === 'ArrowRight') this.inputState.right = false;
+        let changed = false;
+        if ((e.key === 'w' || e.key === 'ArrowUp') && this.inputState.up) {
+            this.inputState.up = false;
+            changed = true;
+        }
+        if ((e.key === 's' || e.key === 'ArrowDown') && this.inputState.down) {
+            this.inputState.down = false;
+            changed = true;
+        }
+        if ((e.key === 'a' || e.key === 'ArrowLeft') && this.inputState.left) {
+            this.inputState.left = false;
+            changed = true;
+        }
+        if ((e.key === 'd' || e.key === 'ArrowRight') && this.inputState.right) {
+            this.inputState.right = false;
+            changed = true;
+        }
+        if (changed) {
+            this.inputStateChanged = true;
+        }
     }
 
     handleMouseMove(e) {
