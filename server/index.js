@@ -4,7 +4,7 @@ import http from 'http';
 import GameEngine from './src/GameEngine.js';
 import NetworkManager from './src/NetworkManager.js';
 
-const PORT = 8080;
+const PORT = 5174;
 
 // 1. Tạo HTTP server (như cũ)
 const server = http.createServer((req, res) => {

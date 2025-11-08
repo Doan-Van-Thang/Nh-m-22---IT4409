@@ -31,8 +31,9 @@ export class Game {
         this.camY = 0; // [THÊM DÒNG NÀY]
 
         // --- KẾT NỐI MẠNG ---
-        // Giả sử server chạy trên cổng 8080 (bạn của bạn cần xác nhận)
-        this.socket = new SocketClient('ws://localhost:8080');
+        const socketUrl = `ws://${window.location.hostname}:5174`;
+        console.log(`Đang kết nối động tới: ${socketUrl}`); // Thêm dòng này để debug
+        this.socket = new SocketClient(socketUrl);
         this.socket.addMessageListener(this.handleServerMessage.bind(this));
     }
 

@@ -30,7 +30,7 @@ npm install
 
 # 3. Khởi động máy chủ
 npm start
-Nếu thành công, bạn sẽ thấy thông báo: [Server] Đã khởi động tại http://localhost:8080
+Nếu thành công, bạn sẽ thấy thông báo: [Server] Đã khởi động tại http://localhost:5174
 
 Quan trọng: Hãy để yên Terminal này chạy.
 

@@ -9,7 +9,7 @@ export default class BulletManager {
 
     spawnBullet(player) {
         // [SỬA] Với xe tăng hình tròn, (x,y) là tâm
-        const bullet = new Bullet(createId(), player.x, player.y, player.rotation, player.id, 10, 5);
+        const bullet = new Bullet(createId(), player.x, player.y, player.rotation, player.id, 30, 5);
         this.bullets.set(bullet.id, bullet);
     }
 
