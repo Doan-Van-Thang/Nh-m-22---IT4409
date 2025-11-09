@@ -63,7 +63,9 @@ export default class BulletManager {
                         }
 
                         // Hồi sinh người chơi đã chết
-                        playerManager.respawnPlayer(player);
+                        //playerManager.respawnPlayer(player);
+                        player.active = false;
+                        player.deathTime = Date.now();
                     }
 
                     // Vì đạn đã nổ, không cần kiểm tra tiếp

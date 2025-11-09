@@ -18,6 +18,8 @@ try {
 
     // 3. Khởi tạo Network, truyền engine vào
     const networkManager = new NetworkManager(server, gameEngine);
+   //Gắn network Manager cho GameEngine
+    gameEngine.setNetworkManager(networkManager);
 
     // 4. Khởi động cả hai
     gameEngine.start();

@@ -1,6 +1,7 @@
 import User from '../model/User.js';
 import { createId } from '../model/utils.js';
 
+const RESPAWNTIME = 3000;
 export default class PlayerManager {
     constructor(world, bulletManager) {
         this.world = world;
@@ -27,6 +28,11 @@ export default class PlayerManager {
             if (player.active) {
                 player.updateMovement(obstacles); // Va chạm tường
                 player.clampToMap(mapWidth, mapHeight); // Va chạm biên
+            }
+            else if(player.deathTime > 0) {
+                if(Date.now() - player.deathTime > RESPAWNTIME) {
+                    this.respawnPlayer(player);
+                }
             }
         });
     }

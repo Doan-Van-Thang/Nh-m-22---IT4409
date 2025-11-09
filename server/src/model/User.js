@@ -14,6 +14,7 @@ export default class User {
         this.active = false;
         this.velocity = { x: 0, y: 0 };
         this.speed = 0.5;
+        this.deathTime = 0;
 
         // [THÊM LẠI PHẦN NÀY]
         this.inputState = {
@@ -94,5 +95,6 @@ export default class User {
         this.radius = 25; // Reset về bán kính gốc
         this.velocity = { x: 0, y: 0 };
         this.active = true; // Kích hoạt lại
+        this.deathTime = 0;
     }
 }

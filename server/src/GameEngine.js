@@ -10,7 +10,12 @@ export default class GameEngine {
         this.bulletManager = new BulletManager(this.world);
         this.playerManager = new PlayerManager(this.world, this.bulletManager);
 
+        this.networkManager = null;
+
         console.log("[GameEngine] Đã khởi tạo các manager.");
+    }
+    setNetworkManager(manager){
+        this.networkManager = manager;
     }
 
     start() {
@@ -25,6 +30,9 @@ export default class GameEngine {
         this.playerManager.update();
         this.bulletManager.update(this.playerManager);
         // (World không cần update)
+        if(this.networkManager){
+            this.networkManager.broadcastState();
+        }
     }
 
     // --- Cung cấp state cho NetworkManager ---

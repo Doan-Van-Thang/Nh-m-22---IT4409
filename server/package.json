@@ -9,6 +9,7 @@
     },
     "author": "Nhom 22 - IT4409",
     "dependencies": {
+        "crypto": "^1.0.1",
         "ws": "^8.17.1"
     }
 }

@@ -9,10 +9,6 @@ export default class NetworkManager {
     start() {
         this.wss.on('connection', ws => this.handleConnection(ws));
 
-        setInterval(() => {
-            this.broadcastState();
-        }, 1000 / 60);
-
         console.log("[NetworkManager] Đã khởi động.");
     }
 
