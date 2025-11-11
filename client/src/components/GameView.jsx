@@ -31,7 +31,7 @@ function GameView({ navigateTo, SCREENS }) {
         // --- Khởi động Game ---
         // 1. Tạo thực thể game
         console.log("GameView: Khởi tạo Game...");
-        gameInstanceRef.current = new Game(canvas, ctx);
+        gameInstanceRef.current = new Game(canvas, ctx, navigateTo, SCREENS);
 
         // 2. (ĐÃ XÓA USER GIẢ)
         // Server sẽ tự động tạo user khi client kết nối.

@@ -2,8 +2,9 @@
 import { collides } from './utils.js';
 
 export default class User {
-    constructor(id, x, y) {
+    constructor(id, x, y,teamId) {
         this.id = id;
+        this.teamId = teamId;
         this.x = x;
         this.y = y;
         this.radius = 25; // Hình tròn
@@ -70,6 +71,7 @@ export default class User {
 
         // 5. Kiểm tra va chạm
         for (const obs of obstacles) {
+            if(obs.teamId && obs.teamId === this.teamId) continue;
             if (collides(this, obs)) {
                 this.x = oldX;
                 this.y = oldY;

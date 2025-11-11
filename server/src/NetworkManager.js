@@ -16,12 +16,13 @@ export default class NetworkManager {
         // [SỬA] Gọi PlayerManager
         const player = this.gameEngine.playerManager.addPlayer();
         const playerId = player.id;
-        console.log(`[NetworkManager] Người chơi ${playerId} đã kết nối.`);
+        console.log(`[NetworkManager] Người chơi ${playerId} (Đội ${player.teamId}) đã kết nối.`);
 
         // Gửi thông tin ban đầu (Giữ nguyên)
         ws.send(JSON.stringify({
-            type: 'playerId',
+            type: 'initialSetup',
             playerId: playerId,
+            teamId: player.teamId,
             startX: player.x,
             startY: player.y
         }));
@@ -77,5 +78,18 @@ export default class NetworkManager {
                 client.send(payload);
             }
         });
+    }
+    broadcastEndGame(winningTeamId) {
+        const payload = JSON.stringify({
+            type: 'gameOver',
+            winningTeamId: winningTeamId
+        });
+
+        this.wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(payload);
+            }
+        });
+
     }
 }

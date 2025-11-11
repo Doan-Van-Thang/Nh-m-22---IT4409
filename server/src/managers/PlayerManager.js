@@ -7,12 +7,15 @@ export default class PlayerManager {
         this.world = world;
         this.bulletManager = bulletManager;
         this.players = new Map();
+        this.nextTeam = 1;
     }
 
     addPlayer() {
         const playerId = createId();
-        const spawn = this.world.getRandomSpawn();
-        const player = new User(playerId, spawn.x, spawn.y);
+        const teamId = this.nextTeam;
+        this.nextTeam = (this.nextTeam === 1) ? 2 : 1;
+        const spawn = this.world.getSpawnPoint(teamId);//Hồi sinh về đúng đội
+        const player = new User(playerId, spawn.x, spawn.y, teamId);
         this.players.set(playerId, player);
         return player;
     }
@@ -62,7 +65,7 @@ export default class PlayerManager {
 
     respawnPlayer(player) {
         if (!player) return;
-        const spawn = this.world.getRandomSpawn();
+        const spawn = this.world.getSpawnPoint(player.teamId);
         player.respawn(spawn.x, spawn.y);
         console.log(`[PlayerManager] Người chơi ${player.id} đã hồi sinh.`);
     }
@@ -78,6 +81,7 @@ export default class PlayerManager {
 
             return {
                 id: p.id,
+                teamId: p.teamId,
                 x: p.x,
                 y: p.y,
                 rotation: p.rotation,

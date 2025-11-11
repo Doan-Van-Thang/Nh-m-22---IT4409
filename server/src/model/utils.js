@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 export function createId(){ //tạo id duy nhất
     //return Date.now().toString(36) + Math.random().toString(36).substring(2);
-    return crypto.randomUUID
+    return crypto.randomUUID();
 }
 
 export function collides(a, b) { //kiêm tra va chạm giữa 2 đối tượng

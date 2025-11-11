@@ -2,6 +2,7 @@ import { Tank } from "./model/ingame/Tank.js";
 import { Bullet } from "./model/ingame/Bullet.js";
 import { InputState } from "./InputState.js";
 import { InputHandler } from "./InputHandler.js";
+import {Base} from "./model/ingame/Base.js"
 import { Map as GameMap } from "./model/ingame/Map.js"; // Đổi tên thành GameMap
 // BỎ: import { CheckCollision } from "./CheckCollision.js"; (Server sẽ làm việc này)
 
@@ -9,14 +10,17 @@ import { Map as GameMap } from "./model/ingame/Map.js"; // Đổi tên thành Ga
 import { SocketClient } from "./SocketClient.js";
 
 export class Game {
-    constructor(canvas, ctx) {
+    constructor(canvas, ctx,navigateTo,SCREENS) {
         this.canvas = canvas;
         this.ctx = ctx;
+        this.navigateTo = navigateTo,
+        this.SCREENS = SCREENS;
 
         // --- CẤU TRÚC LƯU TRỮ TRẠNG THÁI ---
         // Chúng ta không dùng mảng nữa, mà dùng Map để truy cập bằng ID
         this.tanks = new Map();
         this.bullets = new Map();
+        this.bases = new Map();
         // ID của người chơi này, sẽ được server cấp
         this.myPlayerId = null;
 
@@ -59,8 +63,9 @@ export class Game {
     // HÀM MỚI: Xử lý tin nhắn từ server
     handleServerMessage(data) {
         // Server sẽ gửi tin nhắn `playerId` khi kết nối
-        if (data.type === 'playerId') {
+        if (data.type === 'initialSetup') {
             this.myPlayerId = data.playerId;
+            this.myTeamId = data.teamId;
             console.log("Server đã cấp ID:", this.myPlayerId);
             // Gửi tin nhắn kích hoạt player (giống logic server của bạn)
             this.socket.send({ type: "activatePlayer" });
@@ -72,12 +77,16 @@ export class Game {
         if (data.type === 'mapData') {
             // [SỬA] Gửi toàn bộ 'data' (bao gồm width, height, obstacles)
             this.map.updateMapData(data);
+            data.bases.forEach(baseState => {
+                const newBase = new Base(this.ctx, baseState);
+                this.bases.set(baseState.id, newBase);
+            });
             return;
         }
 
         // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
         if (data.type === 'update') {
-            const { players, bullets } = data;
+            const { players, bullets,bases } = data;
 
             // --- Đồng bộ hóa XE TĂNG ---
             const seenTankIds = new Set();
@@ -113,6 +122,24 @@ export class Game {
                     this.bullets.delete(id);
                 }
             });
+
+            //Đồng bộ máu của Base
+            bases.forEach(baseState => {
+                const base = this.bases.get(baseState.id);
+                if(base){
+                    base.updateHealth(baseState.health);
+                }
+            });
+        }
+
+        if (data.type === 'gameOver'){
+            this.stop();
+            alert(`ĐỘI ${data.winningTeamId} THẮNG!`);
+
+            if(this.navigateTo){
+                this.navigateTo(this.SCREENS.MAIN_MENU);
+            }
+
         }
     }
 
@@ -123,9 +150,6 @@ export class Game {
     }
 
     update() {
-        // --- LOGIC CŨ (ĐÃ XÓA) ---
-        // (Xóa toàn bộ logic di chuyển xe tăng)
-        // (Xóa toàn bộ logic cập nhật đạn)
 
         // --- LOGIC MỚI: GỬI INPUT LÊN SERVER ---
 
@@ -139,7 +163,7 @@ export class Game {
         const playerTank = this.tanks.get(this.myPlayerId);
         let turretAngle = 0;
         if (playerTank) {
-            // [SỬA] Giờ (x, y) là TÂM rồi, không cần tính centerX, centerY
+            // Giờ (x, y) là TÂM rồi, không cần tính centerX, centerY
             const { x, y } = playerTank.state;
 
             // Camera giờ sẽ căn giữa vào TÂM (x, y)
@@ -192,8 +216,11 @@ export class Game {
         this.ctx.save();
         this.ctx.translate(-this.camX, -this.camY);
 
-        // 3. Vẽ bản đồ (tường)
+        // 3. Vẽ bản đồ (tường) và vẽ nhà chính
         this.map.draw();
+        this.bases.forEach(base =>{
+            base.draw(this.myTeamId);
+        });
 
         // 4. Vẽ đạn
         this.bullets.forEach(bullet => {

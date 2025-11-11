@@ -1,17 +1,28 @@
 import { createId, collides } from '../model/utils.js';
 export default class World {
     constructor() {
-        this.mapWidth = Math.random() * 1000 + 1000;
-        this.mapHeight = Math.random() * 1000 + 1000;
-        this.obstacles = this.generateRandomObstacles();
+        this.mapWidth = Math.random() * 1000 + 1500;
+        this.mapHeight = Math.random() * 1000 + 1500;
+        this.bases = [
+            { id: 'base_1', teamId: 1, x: 100, y: 100, width: 100, height: 100, health: 1000 },
+            { id: 'base_2', teamId: 2, x: 1300, y: 1300, width: 100, height: 100, health: 1000 }
+        ];
+        this.obstacles = this.generateRandomObstacles().concat(this.bases);
     }
 
     getMapData() {
         return {
             width: this.mapWidth,
             height: this.mapHeight,
-            obstacles: this.obstacles
+            obstacles: this.obstacles,
+            bases: this.bases.map(b => ({ id: b.id, teamId: b.teamId, x: b.x, y: b.y, width: b.width, height: b.height }))
         };
+    }
+    getBaseHealths() {
+        return this.bases.map(b => ({ id: b.id, health: b.health }));
+    }
+    getBases() {
+        return this.bases;
     }
 
     generateRandomObstacles() {
@@ -21,27 +32,47 @@ export default class World {
         for (let i = 0; i < num; i++) {
             const w = 50 + Math.random() * 100;
             const h = 50 + Math.random() * 100;
-            obstacles.push({
-                x: Math.random() * (this.mapWidth - w),
-                y: Math.random() * (this.mapHeight - h),
-                width: w,
-                height: h,
-            });
+            const x = Math.random() * (this.mapWidth - w);
+            const y = Math.random() * (this.mapHeight - h);
+
+            let overlapsWithBase = false;
+            const newObstacle = { x, y, width: w, height: h };
+            for (const base of this.bases) {
+                if(
+                    newObstacle.x < base.x + base.width &&
+                    newObstacle.x + newObstacle.width > base.x &&
+                    newObstacle.y < base.y + base.height &&
+                    newObstacle.y + newObstacle.height > base.y
+                ){
+                    overlapsWithBase = true;
+                    break;
+                }
+                if (overlapsWithBase){i--;
+
+                }else {
+                    obstacles.push({x,y,width: w, height: h});
+                }
+            }
         }
         return obstacles;
     }
 
-    getRandomSpawn() {
+    getSpawnPoint(teamId) {
+        const base = this.bases.find(b => b.teamId === teamId);
+        if (!base) {
+            return { x: 200, y: 200 };
+        }
         let x, y;
         let safe = false;
+        let attempts = 0;
 
-        while (!safe) {
-            x = Math.random() * (this.mapWidth - 100) + 50;
-            y = Math.random() * (this.mapHeight - 100) + 50;
+        while (!safe && attempts < 200) {
+            attempts++;
+            x = base.x + 10 + Math.random() * (base.width - 20);
+            y = base.y + 10 + Math.random() * (base.height - 20);
 
             safe = true;
 
-            // [SỬA] Tạo một "xe tăng giả" để kiểm tra (HÌNH TRÒN)
             const spawnCircle = {
                 x: x,
                 y: y,
@@ -49,12 +80,19 @@ export default class World {
             };
 
             for (const obs of this.obstacles) {
+                if (obs.id === base.id) {
+                    continue;
+                }
                 // collides() sẽ tự động dùng "circleRectCollides"
                 if (collides(spawnCircle, obs)) {
                     safe = false;
                     break;
                 }
             }
+        }
+        if (!safe) {
+            x = base.x + base.width +10;
+            y = base.y + base.width +10;
         }
 
         return { x, y };
