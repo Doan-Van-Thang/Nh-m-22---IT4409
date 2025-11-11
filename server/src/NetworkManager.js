@@ -1,9 +1,11 @@
 import { WebSocketServer } from 'ws';
 
 export default class NetworkManager {
-    constructor(server, gameEngine) {
+    constructor(server, gameEngine, authManager) {
         this.wss = new WebSocketServer({ server });
         this.gameEngine = gameEngine;
+        this.authManager = authManager; // Lưu lại
+        this.clients = new Map(); // Quản lý client và trạng thái auth
     }
 
     start() {
@@ -13,35 +15,25 @@ export default class NetworkManager {
     }
 
     handleConnection(ws) {
-        // [SỬA] Gọi PlayerManager
-        const player = this.gameEngine.playerManager.addPlayer();
-        const playerId = player.id;
-        console.log(`[NetworkManager] Người chơi ${playerId} (Đội ${player.teamId}) đã kết nối.`);
+        // Tạm thời chưa làm gì, đợi client gửi tin nhắn login/register
+        console.log("[NetworkManager] Client mới kết nối, đang chờ xác thực...");
 
-        // Gửi thông tin ban đầu (Giữ nguyên)
-        ws.send(JSON.stringify({
-            type: 'initialSetup',
-            playerId: playerId,
-            teamId: player.teamId,
-            startX: player.x,
-            startY: player.y
-        }));
-        ws.send(JSON.stringify({
-            type: 'mapData',
-            ...this.gameEngine.getMapData()
-        }));
-
-        ws.on('message', msg => this.handleMessage(ws, playerId, msg));
-        ws.on('close', () => this.handleDisconnect(playerId));
+        ws.on('message', msg => this.handleMessage(ws, msg));
+        ws.on('close', () => this.handleDisconnect(ws));
     }
 
-    handleDisconnect(playerId) {
-        console.log(`[NetworkManager] Người chơi ${playerId} đã ngắt kết nối.`);
-        // [SỬA] Gọi PlayerManager
-        this.gameEngine.playerManager.removePlayer(playerId);
+    handleDisconnect(ws) {
+        const playerId = this.clients.get(ws);
+        if (playerId) {
+            console.log(`[NetworkManager] Người chơi ${playerId} đã ngắt kết nối.`);
+            this.gameEngine.playerManager.removePlayer(playerId);
+            this.clients.delete(ws);
+        } else {
+            console.log("[NetworkManager] Client chưa xác thực đã ngắt kết nối.");
+        }
     }
 
-    handleMessage(ws, playerId, msg) {
+    async handleMessage(ws, msg) {
         let data;
         try { data = JSON.parse(msg); }
         catch (err) {
@@ -50,18 +42,64 @@ export default class NetworkManager {
         }
 
         // [SỬA] Chuyển tiếp lệnh cho các manager tương ứng
-        const playerManager = this.gameEngine.playerManager;
+        const playerId = this.clients.get(ws);
+        if (playerId) {
+            const playerManager = this.gameEngine.playerManager;
+            switch (data.type) {
+                case 'update':
+                    playerManager.handleInput(playerId, data);
+                    break;
+                case 'fire':
+                    playerManager.handleFire(playerId);
+                    break;
+                // (activatePlayer không cần nữa vì ta làm ở 'play')
+            }
+            return;
+        }
 
-        switch (data.type) {
-            case 'update':
-                playerManager.handleInput(playerId, data);
-                break;
-            case 'fire':
-                playerManager.handleFire(playerId);
-                break;
-            case 'activatePlayer':
-                playerManager.handleActivate(playerId);
-                break;
+        // Client chưa đăng nhập
+        try {
+            switch (data.type) {
+                case 'register':
+                    await this.authManager.register(data.username, data.password);
+                    ws.send(JSON.stringify({ type: 'registerSuccess' }));
+                    break;
+
+                case 'login':
+                    const loginData = await this.authManager.login(data.username, data.password);
+                    // Đăng nhập thành công, gửi token về client
+                    ws.send(JSON.stringify({ type: 'loginSuccess', ...loginData }));
+                    // *Quan trọng*: Chưa thêm vào game vội, chỉ xác thực.
+                    break;
+
+                case 'play': // Client gửi tin này KHI nhấn nút "Chơi"
+                    // (Giả sử client đã đính kèm token vào tin nhắn 'play')
+                    // TODO: Xác thực token (jwt.verify(data.token, ...))
+
+                    // Nếu token hợp lệ:
+                    const player = this.gameEngine.playerManager.addPlayer();
+                    const newPlayerId = player.id;
+                    this.gameEngine.playerManager.handleActivate(newPlayerId);
+                    this.clients.set(ws, newPlayerId); // Liên kết ws với playerId
+                    console.log(`[NetworkManager] Người chơi ${newPlayerId} (Đội ${player.teamId}) đã vào game.`);
+
+                    // Gửi thông tin ban đầu (như code cũ của bạn)
+                    ws.send(JSON.stringify({
+                        type: 'initialSetup',
+                        playerId: newPlayerId,
+                        teamId: player.teamId,
+                        startX: player.x,
+                        startY: player.y
+                    }));
+                    ws.send(JSON.stringify({
+                        type: 'mapData',
+                        ...this.gameEngine.getMapData()
+                    }));
+                    break;
+            }
+        } catch (error) {
+            // Gửi lỗi về client
+            ws.send(JSON.stringify({ type: 'authError', message: error.message }));
         }
     }
 

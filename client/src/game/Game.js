@@ -2,7 +2,7 @@ import { Tank } from "./model/ingame/Tank.js";
 import { Bullet } from "./model/ingame/Bullet.js";
 import { InputState } from "./InputState.js";
 import { InputHandler } from "./InputHandler.js";
-import {Base} from "./model/ingame/Base.js"
+import { Base } from "./model/ingame/Base.js"
 import { Map as GameMap } from "./model/ingame/Map.js"; // Đổi tên thành GameMap
 // BỎ: import { CheckCollision } from "./CheckCollision.js"; (Server sẽ làm việc này)
 
@@ -10,65 +10,64 @@ import { Map as GameMap } from "./model/ingame/Map.js"; // Đổi tên thành Ga
 import { SocketClient } from "./SocketClient.js";
 
 export class Game {
-    constructor(canvas, ctx,navigateTo,SCREENS) {
+    // [SỬA] Nhận thêm `socket`
+    constructor(canvas, ctx, navigateTo, SCREENS, socket) {
         this.canvas = canvas;
         this.ctx = ctx;
-        this.navigateTo = navigateTo,
+        this.navigateTo = navigateTo;
         this.SCREENS = SCREENS;
 
-        // --- CẤU TRÚC LƯU TRỮ TRẠNG THÁI ---
-        // Chúng ta không dùng mảng nữa, mà dùng Map để truy cập bằng ID
         this.tanks = new Map();
         this.bullets = new Map();
         this.bases = new Map();
-        // ID của người chơi này, sẽ được server cấp
         this.myPlayerId = null;
 
-        // --- INPUT ---
         this.inputState = new InputState();
         this.inputHandler = new InputHandler(this.inputState, this.canvas);
 
-        // --- MAP & VÒNG LẶP ---
-        this.map = new GameMap(this.ctx); // Map vẫn do client vẽ
+        this.map = new GameMap(this.ctx);
         this.gameLoopId = null;
-        this.camX = 0; // [THÊM DÒNG NÀY]
-        this.camY = 0; // [THÊM DÒNG NÀY]
+        this.camX = 0;
+        this.camY = 0;
 
         // --- KẾT NỐI MẠNG ---
-        const socketUrl = `ws://${window.location.hostname}:5174`;
-        console.log(`Đang kết nối động tới: ${socketUrl}`); // Thêm dòng này để debug
-        this.socket = new SocketClient(socketUrl);
+        // [SỬA] Dùng socket được truyền vào
+        this.socket = socket;
+
+        // Đăng ký lắng nghe ngay lập tức
+        // App.jsx cũng lắng nghe, nhưng Game.js sẽ chỉ xử lý tin nhắn game
         this.socket.addMessageListener(this.handleServerMessage.bind(this));
     }
-
-    // BỎ: addUser(user) - Server sẽ quản lý việc này
 
     start() {
         console.log("Game Logic: Starting...");
         this.inputHandler.start();
-        this.socket.connect(); // Kết nối tới server
+        // [SỬA] Không cần connect() nữa vì App.jsx đã làm
         this.gameLoop();
     }
 
     stop() {
         console.log("Game Logic: Stopping...");
         this.inputHandler.stop();
-        this.socket.close(); // Ngắt kết nối
+        // [SỬA] Không close() socket, vì App.jsx quản lý
+        // (chỉ dừng game loop)
         if (this.gameLoopId) {
             cancelAnimationFrame(this.gameLoopId);
             this.gameLoopId = null;
         }
     }
 
-    // HÀM MỚI: Xử lý tin nhắn từ server
+    // [SỬA] handleServerMessage
     handleServerMessage(data) {
-        // Server sẽ gửi tin nhắn `playerId` khi kết nối
+        // App.jsx sẽ xử lý 'loginSuccess', 'authError'
+        // Game.js chỉ quan tâm tin nhắn trong game
+
         if (data.type === 'initialSetup') {
             this.myPlayerId = data.playerId;
             this.myTeamId = data.teamId;
             console.log("Server đã cấp ID:", this.myPlayerId);
-            // Gửi tin nhắn kích hoạt player (giống logic server của bạn)
-            this.socket.send({ type: "activatePlayer" });
+            // [SỬA] Không cần gửi 'activatePlayer'
+            // Server tự động kích hoạt khi nhận 'play'
             return;
         }
 
@@ -86,7 +85,7 @@ export class Game {
 
         // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
         if (data.type === 'update') {
-            const { players, bullets,bases } = data;
+            const { players, bullets, bases } = data;
 
             // --- Đồng bộ hóa XE TĂNG ---
             const seenTankIds = new Set();
@@ -126,17 +125,17 @@ export class Game {
             //Đồng bộ máu của Base
             bases.forEach(baseState => {
                 const base = this.bases.get(baseState.id);
-                if(base){
+                if (base) {
                     base.updateHealth(baseState.health);
                 }
             });
         }
 
-        if (data.type === 'gameOver'){
+        if (data.type === 'gameOver') {
             this.stop();
             alert(`ĐỘI ${data.winningTeamId} THẮNG!`);
 
-            if(this.navigateTo){
+            if (this.navigateTo) {
                 this.navigateTo(this.SCREENS.MAIN_MENU);
             }
 
@@ -218,7 +217,7 @@ export class Game {
 
         // 3. Vẽ bản đồ (tường) và vẽ nhà chính
         this.map.draw();
-        this.bases.forEach(base =>{
+        this.bases.forEach(base => {
             base.draw(this.myTeamId);
         });
 
