@@ -7,7 +7,7 @@ const accountSchema = new mongoose.Schema({
     // Bạn có thể thêm email, ngày tạo,
     // điểm số cao nhất, v.
 
-    highScore: { type: Number, default: 0 }
+    highScore: { type: Number, default: 3600 }, // Điểm số cao nhất của người chơi
 });
 
 // Không lưu passwordHash khi gửi về client

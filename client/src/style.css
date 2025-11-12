@@ -49,3 +49,173 @@ body,
 .menu-button:hover {
   background-color: #45a049;
 }
+
+/* ... (Tất cả style cũ giữ nguyên) ... */
+
+/* Style cho các nút UI */
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  /* Căn lên trên */
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 20px;
+  padding-top: 20px;
+  /* Thêm padding trên */
+}
+
+.menu-button {
+  padding: 15px 30px;
+  font-size: 24px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.menu-button:hover {
+  background-color: #45a049;
+}
+
+
+/* --- CSS MỚI CHO LAYOUT MAIN MENU --- */
+
+/* Hộp thông tin người dùng */
+.user-info-box {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 90%;
+  max-width: 1200px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 1px solid #555;
+}
+
+.user-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  background-color: #777;
+  border-radius: 50%;
+  border: 2px solid white;
+  /* Tạm thời: Hiển thị chữ cái đầu */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  font-weight: bold;
+}
+
+.user-avatar-placeholder::after {
+  content: 'A';
+  /* Ảnh user placeholder */
+}
+
+.user-details h3 {
+  margin: 0 0 5px 0;
+  color: #4CAF50;
+}
+
+.user-details p {
+  margin: 0;
+  font-size: 18px;
+}
+
+/* Layout 2 cột */
+.main-menu-layout {
+  display: flex;
+  flex-direction: row;
+  width: 90%;
+  max-width: 1200px;
+  height: 70vh;
+  /* Giới hạn chiều cao */
+  gap: 20px;
+}
+
+.left-column,
+.right-column {
+  flex: 1;
+  /* Hai cột chia đều */
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 20px;
+  overflow-y: auto;
+  /* Thêm cuộn nếu nội dung dài */
+}
+
+/* Bảng xếp hạng */
+.leaderboard-container ol {
+  list-style-type: decimal;
+  padding-left: 30px;
+}
+
+.leaderboard-container li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  font-size: 18px;
+  border-bottom: 1px solid #444;
+}
+
+.leaderboard-container li span:last-child {
+  font-weight: bold;
+  color: #FFC107;
+  /* Màu vàng */
+}
+
+/* Sảnh chờ / Phòng */
+.room-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.room-list-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.room-list-actions .menu-button {
+  flex: 1;
+  font-size: 20px;
+  padding: 12px 20px;
+}
+
+.rooms-table h4 {
+  border-bottom: 2px solid #4CAF50;
+  padding-bottom: 5px;
+}
+
+.rooms-table ul {
+  list-style: none;
+  padding: 0;
+}
+
+.rooms-table li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: #444;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.join-button {
+  padding: 5px 10px;
+  font-size: 14px;
+  background-color: #55aaff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.join-button:hover {
+  background-color: #3388dd;
+}

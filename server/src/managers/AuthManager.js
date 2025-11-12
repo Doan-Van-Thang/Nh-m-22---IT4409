@@ -50,6 +50,6 @@ export default class AuthManager {
             expiresIn: '1h' // Token có hạn 1 giờ
         });
 
-        return { token, username: account.username, id: account._id };
+        return { token, username: account.username, id: account._id, highScore: account.highScore };
     }
 }

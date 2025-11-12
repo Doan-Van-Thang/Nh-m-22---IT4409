@@ -33,7 +33,7 @@ function App() {
         // Lắng nghe tin nhắn từ server
         socket.addMessageListener(data => {
             if (data.type === 'loginSuccess') {
-                setAuth({ token: data.token, username: data.username });
+                setAuth({ token: data.token, username: data.username, highScore: data.highScore }); // Lưu thông tin đăng nhập
                 setScreen(SCREENS.MAIN_MENU); // Chuyển tới Menu chính
                 alert('Đăng nhập thành công!');
             }
