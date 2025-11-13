@@ -7,13 +7,20 @@ export default class PlayerManager {
         this.world = world;
         this.bulletManager = bulletManager;
         this.players = new Map();
-        this.nextTeam = 1;
     }
 
     addPlayer() {
+        let team1Count = 0;
+        let team2Count = 0;
+        for(const player of this.players.values()){
+            if(player.teamId === 1) {
+                team1Count++;
+            } else {
+                team2Count++;
+            }
+        } 
+        const teamId = (team1Count <= team2Count) ? 1 : 2;
         const playerId = createId();
-        const teamId = this.nextTeam;
-        this.nextTeam = (this.nextTeam === 1) ? 2 : 1;
         const spawn = this.world.getSpawnPoint(teamId);//Hồi sinh về đúng đội
         const player = new User(playerId, spawn.x, spawn.y, teamId);
         this.players.set(playerId, player);

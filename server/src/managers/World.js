@@ -1,11 +1,16 @@
 import { createId, collides } from '../model/utils.js';
 export default class World {
     constructor() {
-        this.mapWidth = Math.random() * 1000 + 1500;
-        this.mapHeight = Math.random() * 1000 + 1500;
+        this.mapWidth = 2500;
+        this.mapHeight = 1500;
+        const baseWidth = 100;
+        const baseHeight = 100;
+        const baseHealth = 1000;
+        const paddingFromEdge = 150;
+        const centerY = (this.mapHeight / 2) - (baseHeight / 2);
         this.bases = [
-            { id: 'base_1', teamId: 1, x: 100, y: 100, width: 100, height: 100, health: 1000 },
-            { id: 'base_2', teamId: 2, x: 1300, y: 1300, width: 100, height: 100, health: 1000 }
+            { id: 'base_1', teamId: 1, x: paddingFromEdge, y: centerY, width: baseWidth, height: baseHeight, health: baseHealth },
+            { id: 'base_2', teamId: 2, x: this.mapWidth - paddingFromEdge - baseWidth, y: centerY, width: baseWidth, height: baseHeight, health: baseHealth }
         ];
         this.obstacles = this.generateRandomObstacles().concat(this.bases);
     }
@@ -38,21 +43,23 @@ export default class World {
             let overlapsWithBase = false;
             const newObstacle = { x, y, width: w, height: h };
             for (const base of this.bases) {
-                if(
+                if (
                     newObstacle.x < base.x + base.width &&
                     newObstacle.x + newObstacle.width > base.x &&
                     newObstacle.y < base.y + base.height &&
                     newObstacle.y + newObstacle.height > base.y
-                ){
+                ) {
                     overlapsWithBase = true;
                     break;
                 }
-                if (overlapsWithBase){i--;
-
-                }else {
-                    obstacles.push({x,y,width: w, height: h});
-                }
             }
+            if (overlapsWithBase) {
+                i--;
+
+            } else {
+                obstacles.push({ x, y, width: w, height: h });
+            }
+
         }
         return obstacles;
     }
@@ -91,8 +98,8 @@ export default class World {
             }
         }
         if (!safe) {
-            x = base.x + base.width +10;
-            y = base.y + base.width +10;
+            x = base.x + base.width + 10;
+            y = base.y + base.width + 10;
         }
 
         return { x, y };
