@@ -70,6 +70,10 @@ export default class GameEngine {
         this.playerManager = new PlayerManager(this.world, this.bulletManager);
         //Khởi tạo cờ trạng thái
         this.gameState = "running";
+        //reset lại networkManager
+        if(this.networkManager){
+            this.networkManager.reset();
+        }
 
         console.log("[GameEngine] Game đã reset")
 

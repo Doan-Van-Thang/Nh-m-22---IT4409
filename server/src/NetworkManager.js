@@ -1,4 +1,7 @@
 import { WebSocketServer } from 'ws';
+import jwt from 'jsonwebtoken';
+import Account from './model/account.js';
+import dotenv from 'dotenv';
 
 export default class NetworkManager {
     constructor(server, gameEngine, authManager) {
@@ -71,6 +74,24 @@ export default class NetworkManager {
                     ws.send(JSON.stringify({ type: 'loginSuccess', ...loginData }));
                     // *Quan trọng*: Chưa thêm vào game vội, chỉ xác thực.
                     break;
+                case 'checkAuth':
+                    try{
+                    const decodedToken = jwt.verify(data.token, process.env.JWT_SECRET);
+                    const account = await Account.findById(decodedToken.id);
+                    if(!account){
+                        throw new Error('Tài khoản không còn tồn tại');
+                    }
+                    ws.send(JSON.stringify({
+                        type: 'authSuccess',
+                        token: data.token,
+                        username: account.username,
+                        id: account._id,
+                        highScore: account.highScore
+                    }));
+                } catch(error) {
+                    throw new Error('Token không hợp lệ hoặc đã hết hạn')
+                }
+                break;
 
                 case 'play': // Client gửi tin này KHI nhấn nút "Chơi"
                     // (Giả sử client đã đính kèm token vào tin nhắn 'play')
@@ -129,5 +150,9 @@ export default class NetworkManager {
             }
         });
 
+    }
+    reset(){
+        this.clients.clear();
+        console.log("[NetworkManager] Đã reset trạng thái clients");
     }
 }

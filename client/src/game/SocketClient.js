@@ -6,6 +6,7 @@ export class SocketClient {
         this.url = url;
         this.socket = null;
         this.messageListeners = [];
+        this.onOpenCallback = null;
     }
 
     connect() {
@@ -16,6 +17,9 @@ export class SocketClient {
 
         this.socket.onopen = () => {
             console.log("SocketClient: Đã kết nối tới server.");
+            if(this.onOpenCallback){//gọi callback nếu đã được đăng ký
+                this.onOpenCallback();
+            }
         };
 
         this.socket.onmessage = (event) => {
@@ -31,6 +35,15 @@ export class SocketClient {
         this.socket.onerror = (error) => {
             console.error("SocketClient: Lỗi WebSocket!", error);
         };
+    }
+
+    // Hàm này để App.jsx đăng ký callback một cách an toàn
+    onOpen(callback) {
+        this.onOpenCallback = callback;
+        // Nếu socket đã mở rồi thì gọi callback ngay lập
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            callback();
+        }
     }
 
     // Hàm để Game.js đăng ký lắng nghe tin nhắn

@@ -1,7 +1,7 @@
 // File: server/src/managers/AuthManager.js
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import Account from '../model/Account.js';
+import Account from '../model/account.js';
 
 export default class AuthManager {
 
