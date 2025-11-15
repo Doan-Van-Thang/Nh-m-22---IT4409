@@ -1,6 +1,5 @@
+// File: client/src/components/MainMenu.jsx
 import React from 'react';
-
-
 
 // === CÁC ICON (Sử dụng SVG placeholder, bạn có thể thay bằng thư viện icon) ===
 const BellIcon = () => (
@@ -20,16 +19,27 @@ const CoinIcon = () => (
     </svg>
 );
 
-// ===== 1. COMPONENT GÓC TRÊN BÊN PHẢI =====
-const UserProfile = () => {
+// [THÊM MỚI] Icon Đăng xuất
+const LogoutIcon = () => (
+    <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    </svg>
+);
+
+
+// ===== 1. COMPONENT GÓC TRÊN BÊN PHẢI (ĐÃ CẬP NHẬT) =====
+// [SỬA] Nhận props `auth` và `onLogout`
+const UserProfile = ({ auth, onLogout }) => {
     return (
         <div className="flex items-center space-x-4 p-4">
             {/* Thay /avatar.png bằng đường dẫn thực tế */}
             <img src="/avatar.png" alt="Avatar" className="w-10 h-10 rounded-full" />
             <div>
-                <div className="font-semibold text-lg">ThamHust</div>
+                {/* [SỬA] Hiển thị tên người dùng từ auth */}
+                <div className="font-semibold text-lg">{auth?.username || 'Guest'}</div>
                 <div className="flex items-center text-sm text-gray-600">
-                    2000
+                    {/* [SỬA] Hiển thị điểm số từ auth */}
+                    {auth?.highScore || 0}
                     <span className="ml-1"><CoinIcon /></span>
                 </div>
             </div>
@@ -38,6 +48,14 @@ const UserProfile = () => {
             </button>
             <button className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100">
                 <SettingsIcon />
+            </button>
+            {/* [THÊM MỚI] Nút Đăng xuất */}
+            <button
+                onClick={onLogout}
+                className="text-gray-500 hover:text-red-600 p-2 rounded-full hover:bg-gray-100"
+                title="Đăng xuất"
+            >
+                <LogoutIcon />
             </button>
         </div>
     );
@@ -84,8 +102,9 @@ const Leaderboard = () => {
     );
 };
 
-// ===== 3. COMPONENT NỘI DUNG CHÍNH (DANH SÁCH PHÒNG) =====
-const RoomList = () => {
+// ===== 3. COMPONENT NỘI DUNG CHÍNH (DANH SÁCH PHÒNG) (ĐÃ CẬP NHẬT) =====
+// [SỬA] Nhận prop `onPlay`
+const RoomList = ({ onPlay }) => {
     // Mock data cho các phòng
     const rooms = [
         { id: 1, name: 'Phòng 1: Giao lưu bạn bè', players: 5, maxPlayers: 10, status: 'Đang chờ' },
@@ -98,6 +117,17 @@ const RoomList = () => {
     return (
         <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Chọn phòng (Lobby)</h1>
+
+            {/* === [THÊM MỚI] NÚT CHƠI NGAY === */}
+            <button
+                onClick={onPlay}
+                className="w-full py-4 mb-8 bg-green-500 text-white rounded-lg text-xl font-bold hover:bg-green-600 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-green-700"
+            >
+                Chơi ngay!
+            </button>
+            {/* === KẾT THÚC NÚT MỚI === */}
+
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {rooms.map((room) => (
                     <div
@@ -124,14 +154,14 @@ const RoomList = () => {
     );
 };
 
-// ===== COMPONENT TỔNG HỢP (TRANG CHÍNH) =====
-export default function MainMenu() {
+// ===== COMPONENT TỔNG HỢP (TRANG CHÍNH) (ĐÃ CẬP NHẬT) =====
+// [SỬA] Nhận props từ App.jsx
+export default function MainMenu({ auth, onPlay, onLogout }) {
     return (
         <div className="flex h-screen bg-gray-100">
 
             {/* === CỘT 1: SIDEBAR (BẢNG XẾP HẠNG) === */}
             <aside className="w-1/4 h-screen p-4 overflow-y-auto">
-                {/* Bạn có thể thay đổi chiều rộng, ví dụ: w-80 hoặc w-1/4 */}
                 <Leaderboard />
             </aside>
 
@@ -140,12 +170,14 @@ export default function MainMenu() {
 
                 {/* 2a. Header chứa UserProfile (căn phải) */}
                 <header className="flex justify-end w-full">
-                    <UserProfile />
+                    {/* [SỬA] Truyền props auth, onLogout xuống */}
+                    <UserProfile auth={auth} onLogout={onLogout} />
                 </header>
 
                 {/* 2b. Danh sách phòng (chiếm phần còn lại) */}
                 <div className="flex-1 p-4 overflow-y-auto">
-                    <RoomList />
+                    {/* [SỬA] Truyền prop onPlay xuống */}
+                    <RoomList onPlay={onPlay} />
                 </div>
 
             </main>

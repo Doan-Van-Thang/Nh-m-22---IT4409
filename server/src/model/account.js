@@ -8,6 +8,10 @@ const accountSchema = new mongoose.Schema({
     // điểm số cao nhất, v.
 
     highScore: { type: Number, default: 3600 }, // Điểm số cao nhất của người chơi
+    name: { type: String, default: 'Người chơi mới' }, // Tên hiển thị
+    province: { type: String, default: 'Chưa cập nhật' }, // Tỉnh/Thành phố
+    avatarUrl: { type: String, default: '' }, // URL ảnh đại diện
+    createdAt: { type: Date, default: Date.now },
 });
 
 // Không lưu passwordHash khi gửi về client

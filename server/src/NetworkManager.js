@@ -64,7 +64,7 @@ export default class NetworkManager {
         try {
             switch (data.type) {
                 case 'register':
-                    await this.authManager.register(data.username, data.password);
+                    await this.authManager.register(data.username, data.password, data.name, data.province, data.avatarUrl);
                     ws.send(JSON.stringify({ type: 'registerSuccess' }));
                     break;
 
@@ -75,23 +75,23 @@ export default class NetworkManager {
                     // *Quan trọng*: Chưa thêm vào game vội, chỉ xác thực.
                     break;
                 case 'checkAuth':
-                    try{
-                    const decodedToken = jwt.verify(data.token, process.env.JWT_SECRET);
-                    const account = await Account.findById(decodedToken.id);
-                    if(!account){
-                        throw new Error('Tài khoản không còn tồn tại');
+                    try {
+                        const decodedToken = jwt.verify(data.token, process.env.JWT_SECRET);
+                        const account = await Account.findById(decodedToken.id);
+                        if (!account) {
+                            throw new Error('Tài khoản không còn tồn tại');
+                        }
+                        ws.send(JSON.stringify({
+                            type: 'authSuccess',
+                            token: data.token,
+                            username: account.username,
+                            id: account._id,
+                            highScore: account.highScore
+                        }));
+                    } catch (error) {
+                        throw new Error('Token không hợp lệ hoặc đã hết hạn')
                     }
-                    ws.send(JSON.stringify({
-                        type: 'authSuccess',
-                        token: data.token,
-                        username: account.username,
-                        id: account._id,
-                        highScore: account.highScore
-                    }));
-                } catch(error) {
-                    throw new Error('Token không hợp lệ hoặc đã hết hạn')
-                }
-                break;
+                    break;
 
                 case 'play': // Client gửi tin này KHI nhấn nút "Chơi"
                     // (Giả sử client đã đính kèm token vào tin nhắn 'play')
@@ -151,7 +151,7 @@ export default class NetworkManager {
         });
 
     }
-    reset(){
+    reset() {
         this.clients.clear();
         console.log("[NetworkManager] Đã reset trạng thái clients");
     }

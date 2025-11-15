@@ -21,15 +21,16 @@ const AUTH_STORAGE_KEY = 'authData'
 function App() {
     const [screen, setScreen] = useState(SCREENS.LOGIN); // Bắt đầu ở màn hình Login
     const [auth, setAuth] = useState(() => {
-    const savedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
+        const savedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
         //Đọc auth từ local storage
-        if(savedAuth){
-            try{return JSON.parse(savedAuth);
+        if (savedAuth) {
+            try {
+                return JSON.parse(savedAuth);
 
-             }catch(e){
+            } catch (e) {
                 localStorage.removeItem(AUTH_STORAGE_KEY);
                 return null;
-             }
+            }
         }
         return null;
     }); // Lưu thông tin { token, username }
@@ -43,27 +44,27 @@ function App() {
         socket.connect();
         socketRef.current = socket;
 
-        socket.onOpen(() =>{
+        socket.onOpen(() => {
             console.log("Socket đã mở");
-            if(auth) {
+            if (auth) {
                 console.log("Đang gửi checkAuth");
-                socket.send({ type: 'checkAuth', token: auth.token});
+                socket.send({ type: 'checkAuth', token: auth.token });
             }
         });
 
         // Lắng nghe tin nhắn từ server
         socket.addMessageListener(data => {
             if (data.type === 'loginSuccess') {
-                const authData = {token: data.token, username: data.username, highScore: data.highScore};
-                localStorage.setItem(AUTH_STORAGE_KEY,JSON.stringify(authData));
+                const authData = { token: data.token, username: data.username, highScore: data.highScore, name: data.name, province: data.province, avatarUrl: data.avatarUrl };
+                localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
                 setAuth(authData); // Lưu thông tin đăng nhập
                 setScreen(SCREENS.MAIN_MENU); // Chuyển tới Menu chính
                 alert('Đăng nhập thành công!');
             }
-            if(data.type === 'authSuccess'){
+            if (data.type === 'authSuccess') {
                 console.log("Xác thực token thành công.");
-                const authData = {token: data.token,username: data.username,highScore: data.highScore};
-                localStorage.setItem(AUTH_STORAGE_KEY,JSON.stringify(authData));
+                const authData = { token: data.token, username: data.username, highScore: data.highScore };
+                localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
                 setAuth(authData);
                 setScreen(SCREENS.MAIN_MENU);
             }
@@ -73,7 +74,7 @@ function App() {
             }
             if (data.type === 'authError') {
                 alert(`Lỗi: ${data.message}`);
-                if(auth){
+                if (auth) {
                     handleLogout();
                 }
             }
@@ -97,8 +98,8 @@ function App() {
     const handleLogin = (username, password) => {
         socketRef.current.send({ type: 'login', username, password });
     };
-    const handleRegister = (username, password) => {
-        socketRef.current.send({ type: 'register', username, password });
+    const handleRegister = (username, password, name, province, avatarUrl) => {
+        socketRef.current.send({ type: 'register', username, password, name, province, avatarUrl });
     };
     const handleLogout = () => {
         localStorage.removeItem(AUTH_STORAGE_KEY);
@@ -115,9 +116,9 @@ function App() {
 
     // Render component tương ứng
     const renderScreen = () => {
-        if(auth && screen === SCREENS.LOGIN){
-                setScreen(SCREENS.MAIN_MENU);
-            }
+        if (auth && screen === SCREENS.LOGIN) {
+            setScreen(SCREENS.MAIN_MENU);
+        }
         switch (screen) {
             case SCREENS.LOGIN:
                 return <LoginScreen onLogin={handleLogin} navigateTo={navigateTo} SCREENS={SCREENS} />;

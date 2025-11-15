@@ -6,7 +6,7 @@ import Account from '../model/account.js';
 export default class AuthManager {
 
     // Đăng ký
-    async register(username, password) {
+    async register(username, password, name, province, avatarUrl) {
         if (password.length < 6) {
             throw new Error('Mật khẩu phải có ít nhất 6 ký tự');
         }
@@ -22,7 +22,11 @@ export default class AuthManager {
         const account = new Account({
             username,
             passwordHash,
-        });
+            name,
+            province,
+            avatarUrl
+        })
+            ;
 
         const savedAccount = await account.save();
         return savedAccount.toJSON();
@@ -50,6 +54,6 @@ export default class AuthManager {
             expiresIn: '1h' // Token có hạn 1 giờ
         });
 
-        return { token, username: account.username, id: account._id, highScore: account.highScore };
+        return { token, username: account.username, id: account._id, highScore: account.highScore, name: account.name, province: account.province, avatarUrl: account.avatarUrl };
     }
 }
