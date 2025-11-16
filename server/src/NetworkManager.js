@@ -4,11 +4,19 @@ import Account from './model/account.js';
 import dotenv from 'dotenv';
 
 export default class NetworkManager {
-    constructor(server, gameEngine, authManager) {
+    constructor(server, authManager) {
         this.wss = new WebSocketServer({ server });
-        this.gameEngine = gameEngine;
-        this.authManager = authManager; // Lưu lại
-        this.clients = new Map(); // Quản lý client và trạng thái auth
+        this.authManager = authManager;
+        this.clients = new Map(); // <ws, { id: playerId, name, avatarUrl }>
+
+        // Sẽ được gán bởi index.js
+        this.roomManager = null;
+        this.gameManager = null;
+    }
+
+    setManagers(roomManager, gameManager) {
+        this.roomManager = roomManager;
+        this.gameManager = gameManager;
     }
 
     start() {
@@ -26,10 +34,14 @@ export default class NetworkManager {
     }
 
     handleDisconnect(ws) {
-        const playerId = this.clients.get(ws);
-        if (playerId) {
-            console.log(`[NetworkManager] Người chơi ${playerId} đã ngắt kết nối.`);
-            this.gameEngine.playerManager.removePlayer(playerId);
+        const player = this.clients.get(ws);
+        if (player) {
+            console.log(`[NetworkManager] Người chơi ${player.id} đã ngắt kết nối.`);
+
+            // THÊM MỚI: Rời khỏi phòng/game
+            this.roomManager.handleLeaveRoom(player.id);
+            // ... logic xóa khỏi game đang chơi nếu có ...
+
             this.clients.delete(ws);
         } else {
             console.log("[NetworkManager] Client chưa xác thực đã ngắt kết nối.");
@@ -44,35 +56,78 @@ export default class NetworkManager {
             return;
         }
 
-        // [SỬA] Chuyển tiếp lệnh cho các manager tương ứng
-        const playerId = this.clients.get(ws);
-        if (playerId) {
-            const playerManager = this.gameEngine.playerManager;
-            switch (data.type) {
-                case 'update':
-                    playerManager.handleInput(playerId, data);
-                    break;
-                case 'fire':
-                    playerManager.handleFire(playerId);
-                    break;
-                // (activatePlayer không cần nữa vì ta làm ở 'play')
+        // [SỬA ĐỔI] Lấy thông tin người chơi
+        const player = this.clients.get(ws);
+
+        // Nếu người chơi đã đăng nhập VÀ đang chơi game
+        if (player && this.roomManager.playerToRoom.has(player.id)) {
+            const roomId = this.roomManager.playerToRoom.get(player.id);
+            const room = this.roomManager.rooms.get(roomId);
+
+            // 1. Xử lý input trong game
+            if (room && room.status === 'in-game') {
+                if (data.type === 'update' || data.type === 'fire') {
+                    // Thêm 'playerId' vào data để gameManager biết là ai
+                    data.playerId = player.id;
+                    this.gameManager.handleGameInput(player.id, data);
+                    return;
+                }
             }
-            return;
+
+            // 2. Xử lý các lệnh trong sảnh (lobby)
+            try {
+                switch (data.type) {
+                    case 'leaveRoom': { // <-- Thêm dấu ngoặc {
+                        // Lấy roomId TRƯỚC khi rời phòng
+                        const currentRoomId = this.roomManager.playerToRoom.get(player.id);
+
+                        this.roomManager.handleLeaveRoom(player.id);
+                        ws.send(JSON.stringify({ type: 'leaveRoomSuccess' }));
+                        this.broadcastRoomList(); // Cập nhật sảnh
+
+                        // Lấy phòng bằng ID vừa lấy
+                        const currentRoom = this.roomManager.rooms.get(currentRoomId);
+
+                        // Nếu phòng vẫn còn (tức là host không rời), cập nhật cho người khác
+                        if (currentRoom) {
+                            this.broadcastToRoom(currentRoomId, {
+                                type: 'roomUpdate',
+                                room: currentRoom.getState()
+                            });
+                        }
+                        break;
+                    }
+                    case 'startGame':
+                        this.roomManager.handleStartGame(room.id, player.id);
+                        // gameManager sẽ broadcast 'gameStarted'
+                        break;
+                    // ... (các lệnh khác trong lobby) ...
+                }
+            } catch (error) {
+                ws.send(JSON.stringify({ type: 'lobbyError', message: error.message }));
+            }
+            // return; // Không return vội, để lọt xuống xử lý chung
         }
 
-        // Client chưa đăng nhập
+        // Client chưa đăng nhập HOẶC chưa vào phòng (đang ở MainMenu)
         try {
             switch (data.type) {
+                // ... (case 'register', 'login', 'checkAuth' như cũ) ...
                 case 'register':
                     await this.authManager.register(data.username, data.password, data.name, data.province, data.avatarUrl);
                     ws.send(JSON.stringify({ type: 'registerSuccess' }));
                     break;
 
+                // Sửa 'login' và 'checkAuth' để lưu thêm thông tin
                 case 'login':
                     const loginData = await this.authManager.login(data.username, data.password);
-                    // Đăng nhập thành công, gửi token về client
+                    // LƯU LẠI THÔNG TIN PLAYER KHI LOGIN
+                    this.clients.set(ws, {
+                        id: loginData.id,
+                        name: loginData.name,
+                        avatarUrl: loginData.avatarUrl
+                    });
                     ws.send(JSON.stringify({ type: 'loginSuccess', ...loginData }));
-                    // *Quan trọng*: Chưa thêm vào game vội, chỉ xác thực.
                     break;
                 case 'checkAuth':
                     try {
@@ -81,17 +136,28 @@ export default class NetworkManager {
                         if (!account) {
                             throw new Error('Tài khoản không còn tồn tại');
                         }
+
+                        // THÊM ĐOẠN NÀY: Lưu lại client khi xác thực thành công
+                        this.clients.set(ws, {
+                            id: account._id,
+                            name: account.name,
+                            avatarUrl: account.avatarUrl
+                        });
+
                         ws.send(JSON.stringify({
                             type: 'authSuccess',
                             token: data.token,
                             username: account.username,
                             id: account._id,
-                            highScore: account.highScore
+                            highScore: account.highScore,
+                            name: account.name, // Gửi thêm name
+                            avatarUrl: account.avatarUrl // Gửi thêm avatarUrl
                         }));
                     } catch (error) {
                         throw new Error('Token không hợp lệ hoặc đã hết hạn')
                     }
                     break;
+                // ... (sửa 'checkAuth' tương tự) ...
 
                 case 'getLeaderboard':
                     try {
@@ -111,63 +177,101 @@ export default class NetworkManager {
                         // Không cần gửi lỗi về client, chỉ log ra
                     }
                     break;
-                case 'play': // Client gửi tin này KHI nhấn nút "Chơi"
-                    // (Giả sử client đã đính kèm token vào tin nhắn 'play')
-                    // TODO: Xác thực token (jwt.verify(data.token, ...))
 
-                    // Nếu token hợp lệ:
-                    const player = this.gameEngine.playerManager.addPlayer();
-                    const newPlayerId = player.id;
-                    this.gameEngine.playerManager.handleActivate(newPlayerId);
-                    this.clients.set(ws, newPlayerId); // Liên kết ws với playerId
-                    console.log(`[NetworkManager] Người chơi ${newPlayerId} (Đội ${player.teamId}) đã vào game.`);
-
-                    // Gửi thông tin ban đầu (như code cũ của bạn)
-                    ws.send(JSON.stringify({
-                        type: 'initialSetup',
-                        playerId: newPlayerId,
-                        teamId: player.teamId,
-                        startX: player.x,
-                        startY: player.y
-                    }));
-                    ws.send(JSON.stringify({
-                        type: 'mapData',
-                        ...this.gameEngine.getMapData()
-                    }));
+                // === TIN NHẮN LOBBY MỚI ===
+                case 'getRoomList':
+                    const rooms = this.roomManager.getRoomList();
+                    ws.send(JSON.stringify({ type: 'roomListData', rooms: rooms }));
                     break;
+
+                case 'createRoom':
+                    if (!player) throw new Error("Chưa xác thực.");
+                    const newRoom = this.roomManager.handleCreateRoom(player);
+                    ws.send(JSON.stringify({ type: 'joinRoomSuccess', room: newRoom.getState() }));
+                    this.broadcastRoomList(); // Cập nhật sảnh cho mọi người
+                    break;
+
+                case 'joinRoom':
+                    if (!player) throw new Error("Chưa xác thực.");
+                    const joinedRoom = this.roomManager.handleJoinRoom(data.roomId, player);
+                    ws.send(JSON.stringify({ type: 'joinRoomSuccess', room: joinedRoom.getState() }));
+                    // Thông báo cho những người khác trong phòng
+                    this.broadcastToRoom(joinedRoom.id, {
+                        type: 'roomUpdate',
+                        room: joinedRoom.getState()
+                    }, ws); // (trừ người vừa join)
+                    this.broadcastRoomList(); // Cập nhật sảnh
+                    break;
+
+                // XÓA BỎ 'play'
+                // case 'play': 
             }
         } catch (error) {
-            // Gửi lỗi về client
             ws.send(JSON.stringify({ type: 'authError', message: error.message }));
         }
     }
 
-    broadcastState() {
-        // Lấy trạng thái (Giữ nguyên)
-        const state = this.gameEngine.getGameState();
+    broadcastGameState(roomId, state) {
         const payload = JSON.stringify({
             type: 'update',
             ...state
         });
+        // Lấy danh sách client thuộc phòng này
+        const room = this.roomManager.rooms.get(roomId);
+        if (!room) return;
 
-        this.wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(payload);
+        this.clients.forEach((playerInfo, ws) => {
+            if (room.players.has(playerInfo.id) && ws.readyState === WebSocket.OPEN) {
+                ws.send(payload);
             }
         });
     }
-    broadcastEndGame(winningTeamId) {
+    // Gửi sự kiện kết thúc game
+    broadcastEndGame(roomId, winningTeamId) {
         const payload = JSON.stringify({
             type: 'gameOver',
             winningTeamId: winningTeamId
         });
+        this.broadcastToRoom(roomId, payload, null);
+    }
+    // Gửi cập nhật danh sách phòng (sảnh)
+    broadcastRoomList() {
+        const rooms = this.roomManager.getRoomList();
+        const payload = JSON.stringify({ type: 'roomListData', rooms: rooms });
 
         this.wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(payload);
+            const player = this.clients.get(client);
+            // Chỉ gửi cho những người đang ở sảnh (chưa vào phòng)
+            if (player && !this.roomManager.playerToRoom.has(player.id)) {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(payload);
+                }
             }
         });
+    }
 
+    broadcastToRoom(roomId, payload, excludeWs = null) {
+        const room = this.roomManager.rooms.get(roomId);
+        if (!room) return;
+
+        const message = (typeof payload === 'string') ? payload : JSON.stringify(payload);
+
+        this.clients.forEach((playerInfo, ws) => {
+            if (ws !== excludeWs && room.players.has(playerInfo.id) && ws.readyState === WebSocket.OPEN) {
+                ws.send(message);
+            }
+        });
+    }
+
+    sendToPlayer(playerId, payload) {
+        const message = (typeof payload === 'string') ? payload : JSON.stringify(payload);
+        for (const [ws, playerInfo] of this.clients.entries()) {
+            if (playerInfo.id === playerId && ws.readyState === WebSocket.OPEN) {
+                ws.send(message);
+                return; // Tìm thấy và gửi
+            }
+        }
+        console.warn(`[NetworkManager] Không tìm thấy client cho playerId ${playerId} để gửi tin.`);
     }
     reset() {
         this.clients.clear();

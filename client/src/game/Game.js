@@ -11,7 +11,7 @@ import { SocketClient } from "./SocketClient.js";
 
 export class Game {
     // [SỬA] Nhận thêm `socket`
-    constructor(canvas, ctx, navigateTo, SCREENS, socket) {
+    constructor(canvas, ctx, navigateTo, SCREENS, socket, initialMapData, initialPlayerSetup) {
         this.canvas = canvas;
         this.ctx = ctx;
         this.navigateTo = navigateTo;
@@ -33,6 +33,8 @@ export class Game {
         // --- KẾT NỐI MẠNG ---
         // [SỬA] Dùng socket được truyền vào
         this.socket = socket;
+        this.initialMapData = initialMapData;
+        this.initialPlayerSetup = initialPlayerSetup;
 
         // Đăng ký lắng nghe ngay lập tức
         // App.jsx cũng lắng nghe, nhưng Game.js sẽ chỉ xử lý tin nhắn game
@@ -42,6 +44,24 @@ export class Game {
     start() {
         console.log("Game Logic: Starting...");
         this.inputHandler.start();
+
+        // THÊM ĐOẠN CODE NÀY:
+        if (this.initialMapData) {
+            console.log("[Game.js] Loading map from initialMapData...");
+            this.map.updateMapData(this.initialMapData);
+            this.initialMapData.bases.forEach(baseState => {
+                const newBase = new Base(this.ctx, baseState);
+                this.bases.set(baseState.id, newBase);
+            });
+            this.initialMapData = null; // Xóa đi sau khi dùng
+        }
+        if (this.initialPlayerSetup) {
+            this.myPlayerId = this.initialPlayerSetup.playerId;
+            this.myTeamId = this.initialPlayerSetup.teamId;
+            console.log("Server đã cấp ID (từ initialPlayerSetup):", this.myPlayerId);
+            this.initialPlayerSetup = null; // Xóa đi sau khi dùng
+        }
+
         // [SỬA] Không cần connect() nữa vì App.jsx đã làm
         this.gameLoop();
     }
@@ -60,28 +80,11 @@ export class Game {
     // [SỬA] handleServerMessage
     handleServerMessage(data) {
         // App.jsx sẽ xử lý 'loginSuccess', 'authError'
-        // Game.js chỉ quan tâm tin nhắn trong game
 
-        if (data.type === 'initialSetup') {
-            this.myPlayerId = data.playerId;
-            this.myTeamId = data.teamId;
-            console.log("Server đã cấp ID:", this.myPlayerId);
-            // [SỬA] Không cần gửi 'activatePlayer'
-            // Server tự động kích hoạt khi nhận 'play'
-            return;
-        }
 
         // Server gửi thông tin map
         // Server gửi thông tin map
-        if (data.type === 'mapData') {
-            // [SỬA] Gửi toàn bộ 'data' (bao gồm width, height, obstacles)
-            this.map.updateMapData(data);
-            data.bases.forEach(baseState => {
-                const newBase = new Base(this.ctx, baseState);
-                this.bases.set(baseState.id, newBase);
-            });
-            return;
-        }
+
 
         // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
         if (data.type === 'update') {

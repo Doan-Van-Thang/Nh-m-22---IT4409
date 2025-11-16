@@ -9,18 +9,8 @@ export default class PlayerManager {
         this.players = new Map();
     }
 
-    addPlayer() {
-        let team1Count = 0;
-        let team2Count = 0;
-        for(const player of this.players.values()){
-            if(player.teamId === 1) {
-                team1Count++;
-            } else {
-                team2Count++;
-            }
-        } 
-        const teamId = (team1Count <= team2Count) ? 1 : 2;
-        const playerId = createId();
+    addPlayer(playerId, teamId) {
+
         const spawn = this.world.getSpawnPoint(teamId);//Hồi sinh về đúng đội
         const player = new User(playerId, spawn.x, spawn.y, teamId);
         this.players.set(playerId, player);
@@ -39,8 +29,8 @@ export default class PlayerManager {
                 player.updateMovement(obstacles); // Va chạm tường
                 player.clampToMap(mapWidth, mapHeight); // Va chạm biên
             }
-            else if(player.deathTime > 0) {
-                if(Date.now() - player.deathTime > RESPAWNTIME) {
+            else if (player.deathTime > 0) {
+                if (Date.now() - player.deathTime > RESPAWNTIME) {
                     this.respawnPlayer(player);
                 }
             }

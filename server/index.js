@@ -6,6 +6,8 @@ import dotenv from 'dotenv'; // Thêm
 import GameEngine from './src/GameEngine.js';
 import NetworkManager from './src/NetworkManager.js';
 import AuthManager from './src/managers/AuthManager.js'; // Thêm
+import RoomManager from './src/managers/RoomManager.js'; // THÊM MỚI
+import GameManager from './src/managers/GameManager.js';
 dotenv.config();
 
 const PORT = process.env.PORT || 5174; // Sử dụng biến môi trường
@@ -28,18 +30,26 @@ const server = http.createServer((req, res) => {
     res.end('Game Server is running.\n');
 });
 
-function startServer() { // Bọc logic khởi động server vào hàm
+function startServer() {
     try {
-        const gameEngine = new GameEngine();
-        // Khởi tạo AuthManager
+        // 1. Khởi tạo các Manager
         const authManager = new AuthManager();
 
-        // [SỬA] Truyền authManager vào NetworkManager
-        const networkManager = new NetworkManager(server, gameEngine, authManager);
+        // Tạo một NetworkManager "trống"
+        const networkManager = new NetworkManager(server, authManager);
 
-        gameEngine.setNetworkManager(networkManager);
-        gameEngine.start();
+        // 2. Khởi tạo các Manager mới
+        const gameManager = new GameManager(networkManager);
+        const roomManager = new RoomManager(gameManager);
+
+        // 3. Gán các manager vào NetworkManager để nó truy cập được
+        networkManager.setManagers(roomManager, gameManager);
+
+        // 4. Bắt đầu NetworkManager (Nó sẽ chờ kết nối)
         networkManager.start();
+
+        // 5. KHÔNG khởi động GameEngine ở đây nữa
+        // gameEngine.start(); // XÓA DÒNG NÀY
 
         server.listen(PORT, () => {
             console.log(`[Server] Đã khởi động tại http://localhost:${PORT}`);

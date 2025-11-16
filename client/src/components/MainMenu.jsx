@@ -117,15 +117,9 @@ const Leaderboard = ({ leaderboard }) => {
 
 // ===== 3. COMPONENT NỘI DUNG CHÍNH (DANH SÁCH PHÒNG) (ĐÃ CẬP NHẬT) =====
 // [SỬA] Nhận prop `onPlay`
-const RoomList = ({ onPlay }) => {
+const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth }) => {
     // Mock data cho các phòng
-    const rooms = [
-        { id: 1, name: 'Phòng 1: Giao lưu bạn bè', players: 5, maxPlayers: 10, status: 'Đang chờ' },
-        { id: 2, name: 'Phòng 2: Cao thủ hội tụ', players: 8, maxPlayers: 10, status: 'Đang chơi' },
-        { id: 3, name: 'Phòng 3: Tám chuyện vui vẻ', players: 2, maxPlayers: 6, status: 'Đang chờ' },
-        { id: 4, name: 'Phòng 4: Đấu rank căng thẳng', players: 9, maxPlayers: 10, status: 'Đang chờ' },
-        { id: 5, name: 'Phòng 5: Chỉ dành cho VIP', players: 1, maxPlayers: 4, status: 'Đang chờ' },
-    ];
+
 
     return (
         <div className="p-6">
@@ -133,31 +127,28 @@ const RoomList = ({ onPlay }) => {
 
             {/* === [THÊM MỚI] NÚT CHƠI NGAY === */}
             <button
-                onClick={onPlay}
-                className="w-full py-4 mb-8 bg-green-500 text-white rounded-lg text-xl font-bold hover:bg-green-600 transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-green-700"
+                onClick={() => onCreateRoom(`Phòng của ${auth.name}`)} // Sửa hàm onClick
+                className="w-full py-4 mb-8 bg-green-500 ..."
             >
-                Chơi ngay!
+                Tạo phòng mới
             </button>
             {/* === KẾT THÚC NÚT MỚI === */}
 
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {rooms.map((room) => (
+                {roomList.length === 0 && <p>Không có phòng nào.</p>}
+                {roomList.map((room) => (
                     <div
                         key={room.id}
-                        className="bg-white p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer border-l-4 border-blue-500"
+                        className="bg-white p-5 rounded-xl ..."
                     >
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-xl font-semibold text-gray-800">{room.name}</h3>
-                            <span className={`text-sm font-medium px-2 py-1 rounded-full ${room.status === 'Đang chờ' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                {room.status}
-                            </span>
-                        </div>
+                        <h3 className="text-xl ...">{room.name}</h3>
                         <p className="text-gray-600 mb-4">
-                            Số người chơi: {room.players}/{room.maxPlayers}
+                            Số người chơi: {room.playerCount}/{room.maxPlayers}
                         </p>
-                        <button className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
+                        <button
+                            onClick={() => onJoinRoom(room.id)} // Sửa hàm onClick
+                            className="w-full px-4 py-2 bg-blue-500 ...">
                             Vào phòng
                         </button>
                     </div>
@@ -167,24 +158,24 @@ const RoomList = ({ onPlay }) => {
     );
 };
 
-export default function MainMenu({ auth, onPlay, onLogout, socket, leaderboard }) {
-
+export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onLogout, socket, leaderboard }) {
     // [MỚI] Thêm useEffect để gửi yêu cầu lấy leaderboard khi component được hiển thị
     useEffect(() => {
         // Hàm để gửi yêu cầu
-        const requestLeaderboard = () => {
+        const requestData = () => {
             if (socket) {
-                console.log("Client: Gửi yêu cầu getLeaderboard");
+                console.log("Client: Gửi yêu cầu getLeaderboard và getRoomList");
                 socket.send({ type: 'getLeaderboard' });
+                socket.send({ type: 'getRoomList' }); // Lấy danh sách phòng
             }
         };
 
         // Kiểm tra xem socket đã sẵn sàng chưa
         if (socket && socket.socket && socket.socket.readyState === WebSocket.OPEN) {
-            requestLeaderboard();
+            requestData();
         } else if (socket) {
             // Nếu socket chưa mở (ví dụ: F5 trang), đợi sự kiện onOpen
-            socket.onOpen(requestLeaderboard);
+            socket.onOpen(requestData);
         }
 
         // Không cần cleanup, vì socket được quản lý bởi App.jsx
@@ -205,7 +196,12 @@ export default function MainMenu({ auth, onPlay, onLogout, socket, leaderboard }
                     <UserProfile auth={auth} onLogout={onLogout} />
                 </header>
                 <div className="flex-1 p-4 overflow-y-auto">
-                    <RoomList onPlay={onPlay} />
+                    <RoomList
+                        onCreateRoom={onCreateRoom}
+                        onJoinRoom={onJoinRoom}
+                        roomList={roomList}
+                        auth={auth}
+                    />
                 </div>
             </main>
         </div>
