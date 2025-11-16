@@ -99,7 +99,7 @@ export default class NetworkManager {
                         const leaderboard = await Account.find({})
                             .sort({ highScore: -1 }) // Sắp xếp giảm dần
                             .limit(10)               // Giới hạn 10 người
-                            .select('name province highScore'); // Chỉ lấy các trường cần thiết
+                            .select('name province highScore avatarUrl'); // Chỉ lấy các trường cần thiết
 
                         // Gửi dữ liệu về cho client đã yêu cầu
                         ws.send(JSON.stringify({

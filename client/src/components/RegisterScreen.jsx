@@ -2,6 +2,15 @@
 
 import React, { useState } from 'react';
 
+const AVAILABLE_AVATARS = [
+    '/avatars/avatar1.png',
+    '/avatars/avatar2.png',
+    '/avatars/avatar3.png',
+    '/avatars/avatar4.png',
+    '/avatars/avatar5.png',
+    '/avatars/avatar6.png',
+];
+
 // Nhận onRegister (từ App.jsx) và navigateTo (để quay lại Login)
 function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
     const [username, setUsername] = useState('');
@@ -9,7 +18,7 @@ function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [name, setName] = useState('');
     const [province, setProvince] = useState('');
-    const [avatarUrl, setAvatarUrl] = useState('');
+    const [avatarUrl, setAvatarUrl] = useState(AVAILABLE_AVATARS[0]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -84,14 +93,26 @@ function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
                         // [MỚI] Style cho input
                         className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <input
-                        type="text"
-                        placeholder="URL ảnh đại diện"
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        // [MỚI] Style cho input
-                        className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Chọn ảnh đại diện
+                        </label>
+                        <div className="flex flex-wrap gap-3 justify-center">
+                            {AVAILABLE_AVATARS.map((path) => (
+                                <img
+                                    key={path}
+                                    src={path}
+                                    alt="Avatar"
+                                    onClick={() => setAvatarUrl(path)}
+                                    // Thêm style để highlight ảnh được chọn
+                                    className={`w-16 h-16 rounded-full cursor-pointer transition-all ${avatarUrl === path
+                                        ? 'ring-4 ring-blue-500 scale-110'
+                                        : 'opacity-70 hover:opacity-100'
+                                        }`}
+                                />
+                            ))}
+                        </div>
+                    </div>
 
                     {/* [MỚI] Style cho nút chính */}
                     <button

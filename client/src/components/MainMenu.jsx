@@ -31,11 +31,15 @@ const LogoutIcon = () => (
 const UserProfile = ({ auth, onLogout }) => {
     return (
         <div className="flex items-center space-x-4 p-4">
-            {/* Thay /avatar.png bằng đường dẫn thực tế */}
-            <img src="/avatar.png" alt="Avatar" className="w-10 h-10 rounded-full" />
+            {/* [SỬA ĐỔI] Dùng auth.avatarUrl, nếu không có thì dùng /avatar.png */}
+            <img
+                src={auth?.avatarUrl || '/avatar.png'}
+                alt="Avatar"
+                className="w-10 h-10 rounded-full bg-gray-300" // Thêm bg-gray-300
+            />
             <div>
                 {/* [SỬA] Hiển thị tên người dùng từ auth */}
-                <div className="font-semibold text-lg">{auth?.username || 'Guest'}</div>
+                <div className="font-semibold text-lg">{auth?.name || 'Guest'}</div>
                 <div className="flex items-center text-sm text-gray-600">
                     {/* [SỬA] Hiển thị điểm số từ auth */}
                     {auth?.highScore || 0}
@@ -78,19 +82,21 @@ const Leaderboard = ({ leaderboard }) => {
                 <ul className="space-y-3">
                     {/* [SỬA] Map qua dữ liệu thật từ server */}
                     {users.map((user, index) => (
-                        <li key={user._id || index} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
-                            <div className="flex items-center space-x-3">
-                                <span className="font-bold text-lg">{index + 1}.</span>
+                        <li key={user._id || index} className="flex items-baseline justify-between p-2 rounded-lg hover:bg-gray-50">                            <div className="flex items-center space-x-3">
+                            <span className="font-bold text-lg">{index + 1}.</span>
 
-                                {/* (Server chưa trả về avatar, tạm dùng placeholder) */}
-                                <img src={`/avatar${index + 1}.png`} alt={user.name} className="w-8 h-8 rounded-full bg-gray-300" />
-
-                                <div>
-                                    <span className="font-medium">{user.name}</span>
-                                    {/* Hiển thị tỉnh/thành phố (nếu có) */}
-                                    <span className="ml-2 text-sm text-gray-500">{user.province || '...'}</span>
-                                </div>
+                            {/* [SỬA ĐỔI] Dùng user.avatarUrl, nếu không có thì dùng /avatar.png */}
+                            <img
+                                src={user.avatarUrl || '/avatar.png'}
+                                alt={user.name}
+                                className="w-8 h-8 rounded-full bg-gray-300" // Thêm bg-gray-300
+                            />
+                            <div className="flex flex-col">
+                                <span className="font-medium">{user.name}</span>
+                                {/* Bỏ 'ml-2' vì đã xuống dòng */}
+                                <span className="text-sm text-gray-500">{user.province || '...'}</span>
                             </div>
+                        </div>
                             {/* Hiển thị điểm số thật */}
                             <span className="font-semibold text-blue-600 text-lg">{user.highScore}</span>
                         </li>
