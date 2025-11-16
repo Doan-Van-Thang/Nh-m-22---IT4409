@@ -19,6 +19,7 @@ const socketUrl = `ws://${window.location.hostname}:5174`;
 const AUTH_STORAGE_KEY = 'authData'
 
 function App() {
+    const [leaderboard, setLeaderboard] = useState([]); // [MỚI] State cho bảng xếp hạng
     const [screen, setScreen] = useState(SCREENS.LOGIN); // Bắt đầu ở màn hình Login
     const [auth, setAuth] = useState(() => {
         const savedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -67,6 +68,9 @@ function App() {
                 localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
                 setAuth(authData);
                 setScreen(SCREENS.MAIN_MENU);
+            }
+            if (data.type === 'leaderboardData') {
+                setLeaderboard(data.payload); // Cập nhật state
             }
             if (data.type === 'registerSuccess') {
                 setScreen(SCREENS.LOGIN); // Quay lại Login
@@ -134,6 +138,8 @@ function App() {
                         onLogout={handleLogout}
                         navigateTo={navigateTo}
                         SCREENS={SCREENS}
+                        socket={socketRef.current} // [MỚI] Truyền socket xuống
+                        leaderboard={leaderboard}
                     />
                 );
 

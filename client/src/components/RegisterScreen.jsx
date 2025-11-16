@@ -27,7 +27,7 @@ function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
         }
 
         // 3. Nếu mọi thứ OK, gọi hàm onRegister (truyền từ App.jsx)
-        onRegister(username, password);
+        onRegister(username, password, name, province, avatarUrl);
     };
 
     return (

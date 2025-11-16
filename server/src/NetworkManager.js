@@ -93,6 +93,24 @@ export default class NetworkManager {
                     }
                     break;
 
+                case 'getLeaderboard':
+                    try {
+                        // Truy vấn 10 người chơi có điểm cao nhất
+                        const leaderboard = await Account.find({})
+                            .sort({ highScore: -1 }) // Sắp xếp giảm dần
+                            .limit(10)               // Giới hạn 10 người
+                            .select('name province highScore'); // Chỉ lấy các trường cần thiết
+
+                        // Gửi dữ liệu về cho client đã yêu cầu
+                        ws.send(JSON.stringify({
+                            type: 'leaderboardData',
+                            payload: leaderboard
+                        }));
+                    } catch (error) {
+                        console.error("[NetworkManager] Lỗi khi lấy leaderboard:", error);
+                        // Không cần gửi lỗi về client, chỉ log ra
+                    }
+                    break;
                 case 'play': // Client gửi tin này KHI nhấn nút "Chơi"
                     // (Giả sử client đã đính kèm token vào tin nhắn 'play')
                     // TODO: Xác thực token (jwt.verify(data.token, ...))

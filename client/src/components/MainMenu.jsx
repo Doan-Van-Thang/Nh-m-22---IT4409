@@ -1,6 +1,5 @@
 // File: client/src/components/MainMenu.jsx
-import React from 'react';
-
+import React, { useEffect } from 'react'; // [SỬA] Import thêm useEffect
 // === CÁC ICON (Sử dụng SVG placeholder, bạn có thể thay bằng thư viện icon) ===
 const BellIcon = () => (
     <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,36 +60,44 @@ const UserProfile = ({ auth, onLogout }) => {
     );
 };
 
-// ===== 2. COMPONENT SIDEBAR BÊN TRÁI (BẢNG XẾP HẠNG) =====
-const Leaderboard = () => {
-    // Mock data (dữ liệu giả) dựa trên hình ảnh
-    const users = [
-        { name: 'L A M Y', flag: '🇩🇪', score: 9423, rank: 1, avatar: '/avatar1.png' },
-        { name: 'Guest Ebonee', flag: '🇨🇦', score: 6298, rank: 2, avatar: '/avatar2.png' },
-        { name: '-BLUEWINGS-', flag: '🇺🇸', score: 5090, rank: 3, avatar: '/avatar3.png' },
-        { name: 'Will', flag: '🇬🇧', score: 4548, rank: 4, avatar: '/avatar4.png' },
-        { name: 'so.dak.sly-fb ...', flag: '🇺🇸', score: 4529, rank: 5, avatar: '/avatar5.png' },
-        { name: 'Andy', flag: '🇬🇧', score: 3472, rank: 6, avatar: '/avatar6.png' },
-    ];
+// ===== 2. COMPONENT SIDEBAR (LEADERBOARD) (CẬP NHẬT) =====
+// [SỬA] Nhận prop 'leaderboard'
+const Leaderboard = ({ leaderboard }) => {
+
+    // [SỬA] Sử dụng dữ liệu thật từ prop, bỏ mock data
+    const users = leaderboard || []; // Nếu leaderboard chưa có thì dùng mảng rỗng
 
     return (
         <div className="w-full h-full bg-white p-6 rounded-xl shadow-lg">
             <h2 className="text-2xl font-bold mb-4">Bảng xếp hạng</h2>
-            <ul className="space-y-3">
-                {users.map((user) => (
-                    <li key={user.rank} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
-                        <div className="flex items-center space-x-3">
-                            <span className="font-bold text-lg">{user.rank}.</span>
-                            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full bg-gray-300" />
-                            <div>
-                                <span className="font-medium">{user.name}</span>
-                                <span className="ml-2">{user.flag}</span>
+
+            {/* [SỬA] Thêm kiểm tra trạng thái loading/rỗng */}
+            {users.length === 0 ? (
+                <div className="text-gray-500 text-center">Đang tải...</div>
+            ) : (
+                <ul className="space-y-3">
+                    {/* [SỬA] Map qua dữ liệu thật từ server */}
+                    {users.map((user, index) => (
+                        <li key={user._id || index} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+                            <div className="flex items-center space-x-3">
+                                <span className="font-bold text-lg">{index + 1}.</span>
+
+                                {/* (Server chưa trả về avatar, tạm dùng placeholder) */}
+                                <img src={`/avatar${index + 1}.png`} alt={user.name} className="w-8 h-8 rounded-full bg-gray-300" />
+
+                                <div>
+                                    <span className="font-medium">{user.name}</span>
+                                    {/* Hiển thị tỉnh/thành phố (nếu có) */}
+                                    <span className="ml-2 text-sm text-gray-500">{user.province || '...'}</span>
+                                </div>
                             </div>
-                        </div>
-                        <span className="font-semibold text-blue-600 text-lg">{user.score}</span>
-                    </li>
-                ))}
-            </ul>
+                            {/* Hiển thị điểm số thật */}
+                            <span className="font-semibold text-blue-600 text-lg">{user.highScore}</span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
             <button className="w-full mt-4 text-blue-500 hover:underline">
                 Nhìn thấy tất cả
             </button>
@@ -154,32 +161,46 @@ const RoomList = ({ onPlay }) => {
     );
 };
 
-// ===== COMPONENT TỔNG HỢP (TRANG CHÍNH) (ĐÃ CẬP NHẬT) =====
-// [SỬA] Nhận props từ App.jsx
-export default function MainMenu({ auth, onPlay, onLogout }) {
+export default function MainMenu({ auth, onPlay, onLogout, socket, leaderboard }) {
+
+    // [MỚI] Thêm useEffect để gửi yêu cầu lấy leaderboard khi component được hiển thị
+    useEffect(() => {
+        // Hàm để gửi yêu cầu
+        const requestLeaderboard = () => {
+            if (socket) {
+                console.log("Client: Gửi yêu cầu getLeaderboard");
+                socket.send({ type: 'getLeaderboard' });
+            }
+        };
+
+        // Kiểm tra xem socket đã sẵn sàng chưa
+        if (socket && socket.socket && socket.socket.readyState === WebSocket.OPEN) {
+            requestLeaderboard();
+        } else if (socket) {
+            // Nếu socket chưa mở (ví dụ: F5 trang), đợi sự kiện onOpen
+            socket.onOpen(requestLeaderboard);
+        }
+
+        // Không cần cleanup, vì socket được quản lý bởi App.jsx
+    }, [socket]); // Chỉ chạy khi 'socket' prop thay đổi (thường là 1 lần)
+
     return (
         <div className="flex h-screen bg-gray-100">
 
-            {/* === CỘT 1: SIDEBAR (BẢNG XẾP HẠNG) === */}
+            {/* === CỘT 1: SIDEBAR === */}
             <aside className="w-1/4 h-screen p-4 overflow-y-auto">
-                <Leaderboard />
+                {/* [SỬA] Truyền 'leaderboard' xuống component con */}
+                <Leaderboard leaderboard={leaderboard} />
             </aside>
 
             {/* === CỘT 2: NỘI DUNG CHÍNH === */}
             <main className="flex-1 h-screen flex flex-col">
-
-                {/* 2a. Header chứa UserProfile (căn phải) */}
                 <header className="flex justify-end w-full">
-                    {/* [SỬA] Truyền props auth, onLogout xuống */}
                     <UserProfile auth={auth} onLogout={onLogout} />
                 </header>
-
-                {/* 2b. Danh sách phòng (chiếm phần còn lại) */}
                 <div className="flex-1 p-4 overflow-y-auto">
-                    {/* [SỬA] Truyền prop onPlay xuống */}
                     <RoomList onPlay={onPlay} />
                 </div>
-
             </main>
         </div>
     );
