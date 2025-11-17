@@ -47,8 +47,7 @@ export default class GameManager {
     endGame(roomId) {
         const game = this.activeGames.get(roomId);
         if (game) {
-            // Dừng vòng lặp (GameEngine cần có hàm stop())
-            // game.stop(); 
+            game.stop();
             this.activeGames.delete(roomId);
             console.log(`[GameManager] Đã xóa game của phòng ${roomId}.`);
         }

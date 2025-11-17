@@ -70,12 +70,6 @@ export default class PlayerManager {
     getState() {
         return Array.from(this.players.values()).map((p) => {
 
-            // --- [THÊM DÒNG NÀY ĐỂ DEBUG] ---
-            if (p.health < 100) {
-                console.log(`[SERVER] Sending player ${p.id} health: ${p.health}`);
-            }
-            // --- [HẾT PHẦN THÊM] ---
-
             return {
                 id: p.id,
                 teamId: p.teamId,

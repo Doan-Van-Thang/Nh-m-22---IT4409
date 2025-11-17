@@ -22,11 +22,19 @@ export default class GameEngine {
     }
 
     start() {
-        setInterval(() => {
+        this.loopInterval = setInterval(() => {
             this.loop();
         }, 1000 / 60);
         console.log("[GameEngine] Vòng lặp game đã bắt đầu.");
     }
+
+    stop() {
+    if (this.loopInterval) {
+        clearInterval(this.loopInterval);
+        this.loopInterval = null;
+        console.log(`[GameEngine] Đã dừng vòng lặp game ${this.roomId}.`);
+    }
+}
 
     loop() {
         if (this.gameState === "game_over") return;
