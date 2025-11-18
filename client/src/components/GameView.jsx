@@ -1,9 +1,9 @@
 // File: client/src/components/GameView.jsx
 import React, { useRef, useEffect } from 'react';
 import { Game } from '../game/Game.js';
-// (Bỏ: import { User } ... vì không dùng)
 
-// [SỬA] Nhận `socket` từ App.jsx
+
+//  Nhận `socket` từ App.jsx
 function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSetup }) {
     const canvasRef = useRef(null);
     const gameInstanceRef = useRef(null);
@@ -13,8 +13,12 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         if (!canvas || !socket) return; // [SỬA] Chờ cả socket
 
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const handleResize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
 
         console.log("GameView: Khởi tạo Game...");
         // [SỬA] Truyền socket đã có vào Game
@@ -25,6 +29,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
 
         return () => {
             console.log("GameView: Hủy component, dừng game...");
+            window.removeEventListener('resize', handleResize);
             if (gameInstanceRef.current) {
                 gameInstanceRef.current.stop();
             }

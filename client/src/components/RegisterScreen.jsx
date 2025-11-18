@@ -11,6 +11,15 @@ const AVAILABLE_AVATARS = [
     '/avatars/avatar6.png',
 ];
 
+const VIETNAM_PROVINCES = [
+    "An Giang", "Bắc Ninh", "Cà Mau", "Cao Bằng", "Đắk Lắk", "Điện Biên",
+    "Đồng Nai", "Đồng Tháp", "Gia Lai", "Hà Tĩnh", "Hưng Yên", "Khánh Hoà",
+    "Lai Châu", "Lâm Đồng", "Lạng Sơn", "Lào Cai", "Nghệ An", "Ninh Bình",
+    "Phú Thọ", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
+    "Thái Nguyên", "Thanh Hóa", "TP. Cần Thơ", "TP. Đà Nẵng", "TP. Hà Nội",
+    "TP. Hải Phòng", "TP. Hồ Chí Minh", "TP. Huế", "Tuyên Quang", "Vĩnh Long"
+];
+
 // Nhận onRegister (từ App.jsx) và navigateTo (để quay lại Login)
 function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
     const [username, setUsername] = useState('');
@@ -84,15 +93,22 @@ function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
                         // [MỚI] Style cho input
                         className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <input
-                        type="text"
-                        placeholder="Tỉnh/Thành phố"
-                        value={province}
-                        onChange={(e) => setProvince(e.target.value)}
-                        required
-                        // [MỚI] Style cho input
-                        className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className='relative'>
+                        <select
+                           value={province}
+                           onChange={(e) => setProvince(e.target.value)}
+                           required
+                           className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white'
+                        >
+                            <option value = "" disabled>--Chọn Tỉnh/Thành phố --</option>
+                            {VIETNAM_PROVINCES.map((prov) => (
+                                <option key={prov} value={prov}>
+                                    {prov}
+                                </option>
+                            ))}
+                        </select>
+
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Chọn ảnh đại diện
