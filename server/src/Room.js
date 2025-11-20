@@ -19,7 +19,9 @@ export default class Room {
         }
         // Gán đội cho người chơi, logic 1v1 hoặc 2v2...
         // Ví dụ đơn giản: xen kẽ
-        const teamId = (this.players.size % 2) + 1;
+        const team1Count = this.countPlayersInTeam(1);
+        const team2Count = this.countPlayersInTeam(2);
+        const teamId = (team1Count <= team2Count) ? 1 : 2;
 
         const playerInfo = {
             id: player.id,
@@ -29,6 +31,28 @@ export default class Room {
         };
         this.players.set(player.id, playerInfo);
         console.log(`[Room ${this.id}] Người chơi ${player.id} đã vào.`);
+    }
+
+    countPlayersInTeam(teamId){
+        let count =0;
+        for(const p of this.players.values()){
+            if(p.teamId === teamId) count++;
+        }
+        return count;
+    }
+
+    switchPlayerTeam(playerId, newTeamId){
+        const player = this.players.get(playerId);
+        if(!player) return;
+
+        if(player.teamId === newTeamId) return;
+        const maxPerTeam = this.maxPlayers/2;
+        if(this.countPlayersInTeam(newTeamId) >= maxPerTeam){
+            throw new Error("Đội này đã đầy");
+        }
+
+        player.teamId = newTeamId;
+        console.log(`[Room ${this.id}] Người chơi ${player.name} chuyển sang đội ${newTeamId}`);
     }
 
     removePlayer(playerId) {

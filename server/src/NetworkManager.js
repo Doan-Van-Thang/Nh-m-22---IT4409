@@ -101,7 +101,23 @@ export default class NetworkManager {
                         this.roomManager.handleStartGame(room.id, player.id);
                         // gameManager sẽ broadcast 'gameStarted'
                         break;
-                    // ... (các lệnh khác trong lobby) ...
+                    case 'switchTeam': {
+                        const roomId = this.roomManager.playerToRoom.get(player.id);
+                        const room = this.roomManager.rooms.get(roomId);
+
+                        if(room){
+                            try{
+                                room.switchPlayerTeam(player.id, data.teamId);
+                                this.broadcastToRoom(roomId, {
+                                    type: 'roomUpdate',
+                                    room: room.getState()
+                                });
+                            } catch(err){
+                                console.log(err.message);
+                            }
+                        }
+                        break;
+                    }
                 }
             } catch (error) {
                 ws.send(JSON.stringify({ type: 'lobbyError', message: error.message }));
@@ -137,7 +153,7 @@ export default class NetworkManager {
                             throw new Error('Tài khoản không còn tồn tại');
                         }
 
-                        // THÊM ĐOẠN NÀY: Lưu lại client khi xác thực thành công
+                        // Lưu lại client khi xác thực thành công
                         this.clients.set(ws, {
                             id: account._id,
                             name: account.name,
@@ -157,7 +173,6 @@ export default class NetworkManager {
                         throw new Error('Token không hợp lệ hoặc đã hết hạn')
                     }
                     break;
-                // ... (sửa 'checkAuth' tương tự) ...
 
                 case 'getLeaderboard':
                     try {
@@ -203,8 +218,7 @@ export default class NetworkManager {
                     this.broadcastRoomList(); // Cập nhật sảnh
                     break;
 
-                // XÓA BỎ 'play'
-                // case 'play': 
+                
             }
         } catch (error) {
             ws.send(JSON.stringify({ type: 'authError', message: error.message }));

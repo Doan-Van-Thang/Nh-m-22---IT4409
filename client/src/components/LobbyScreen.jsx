@@ -1,19 +1,88 @@
-// client/src/components/LobbyScreen.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
+import PlayerCard from './PlayerCard'; 
 
-// (Bạn có thể copy các Icon từ MainMenu.jsx nếu muốn)
+// Component hiển thị cột cho từng đội 
+const TeamColumn = ({ 
+    teamName, 
+    teamColor, // 'red' hoặc 'blue'
+    players, 
+    currentUserId, 
+    onJoin, 
+    hostId 
+}) => {
+    const isMyTeam = players.find(p => p.id === currentUserId);
+    
+    // Cấu hình màu sắc dựa trên teamColor
+    const colors = {
+        red: {
+            bg: 'bg-red-100', border: 'border-red-400', title: 'text-red-700',
+            btn: 'bg-red-600 hover:bg-red-700', myTeamBg: 'bg-red-200', myTeamText: 'text-red-700'
+        },
+        blue: {
+            bg: 'bg-blue-100', border: 'border-blue-400', title: 'text-blue-700',
+            btn: 'bg-blue-600 hover:bg-blue-700', myTeamBg: 'bg-blue-200', myTeamText: 'text-blue-700'
+        }
+    }[teamColor];
+
+    return (
+        <div className={`${colors.bg} rounded-xl p-4 border-4 ${colors.border} flex flex-col shadow-xl relative transition-all duration-300`}>
+            <h2 className={`text-2xl font-bold ${colors.title} text-center mb-4 uppercase tracking-wider`}>
+                {teamName} ({players.length})
+            </h2>
+            
+            <div className="flex-1 space-y-2 min-h-[200px]">
+                {players.map(p => (
+                    <PlayerCard 
+                        key={p.id} 
+                        player={p} 
+                        isHost={p.id === hostId} 
+                    />
+                ))}
+                {players.length === 0 && (
+                    <div className={`text-center ${colors.title} opacity-50 italic mt-10`}>
+                        Chưa có ai...
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-4 text-center">
+                {currentUserId && !isMyTeam && (
+                    <button 
+                        onClick={onJoin}
+                        className={`w-full py-3 ${colors.btn} text-white font-bold rounded-lg shadow transition transform active:scale-95`}
+                    >
+                        Gia nhập {teamName}
+                    </button>
+                )}
+                {isMyTeam && (
+                    <div className={`py-3 ${colors.myTeamText} font-bold ${colors.myTeamBg} rounded-lg border border-white/50`}>
+                        ✓ Bạn đang ở đội này
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 function LobbyScreen({ auth, room, socket, navigateTo, SCREENS }) {
+  
+    useEffect(() => {
+        if (!room) {
+            navigateTo(SCREENS.MAIN_MENU);
+        }
+    }, [room, navigateTo, SCREENS]);
 
-    if (!room) {
-        // Nếu không có phòng, quay về sảnh
-        navigateTo(SCREENS.MAIN_MENU);
-        return null;
-    }
+    if (!room) return null;
 
     const isHost = auth.id === room.hostId;
+    const team1Players = room.players.filter(p => p.teamId === 1);
+    const team2Players = room.players.filter(p => p.teamId === 2);
 
     const handleStartGame = () => {
+        if (team1Players.length === 0 || team2Players.length === 0) {
+            alert("Cần ít nhất 1 người mỗi đội để bắt đầu!"); 
+            return;
+        }
         socket.send({ type: 'startGame' });
     };
 
@@ -21,53 +90,75 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS }) {
         socket.send({ type: 'leaveRoom' });
     };
 
+    const handleSwitchTeam = (teamId) => {
+        socket.send({ type: 'switchTeam', teamId: teamId });
+    };
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl">
-                <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">{room.name}</h1>
-                <p className="text-center text-gray-500 mb-6">ID phòng: {room.id}</p>
-
-                <h2 className="text-xl font-semibold mb-4">Người chơi ({room.players.length} / 4):</h2>
-
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                    {room.players.map((player, index) => (
-                        <div key={player.id + '-' + index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                            <img
-                                src={player.avatarUrl || '/avatar.png'}
-                                alt={player.name}
-                                className="w-12 h-12 rounded-full"
-                            />
-                            <div>
-                                <div className="font-medium">{player.name} {player.id === room.hostId ? '(Chủ phòng)' : ''}</div>
-                                <span className={player.teamId === 1 ? 'text-blue-500' : 'text-red-500'}>
-                                    Đội {player.teamId}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
+        <div className="min-h-screen bg-gray-800 p-4 flex flex-col items-center">
+            {/* Header Phòng */}
+            <div className="bg-white w-full max-w-4xl p-4 rounded-xl shadow-lg mb-6 flex justify-between items-center animate-fade-in-down">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        🏠 {room.name}
+                    </h1>
+                    <p className="text-gray-500 text-sm">ID Phòng: <span className="font-mono font-bold">{room.id}</span></p>
                 </div>
+                <div className="text-2xl font-black bg-gray-100 px-4 py-2 rounded-lg shadow-inner">
+                    <span className="text-red-600">{team1Players.length}</span>
+                    <span className="mx-3 text-gray-300">VS</span>
+                    <span className="text-blue-600">{team2Players.length}</span>
+                </div>
+            </div>
 
-                <div className="flex flex-col md:flex-row gap-4">
-                    {isHost ? (
-                        <button
-                            onClick={handleStartGame}
-                            className="flex-1 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
-                        >
-                            Bắt đầu trận đấu
-                        </button>
-                    ) : (
-                        <div className="flex-1 py-3 text-center bg-gray-200 text-gray-600 rounded-lg font-medium">
-                            Đang chờ chủ phòng...
-                        </div>
-                    )}
+            {/* Khu vực chia đội (Grid layout) */}
+            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-1">
+                
+                <TeamColumn 
+                    teamName="Đội Đỏ"
+                    teamColor="red"
+                    players={team1Players}
+                    currentUserId={auth.id}
+                    hostId={room.hostId}
+                    onJoin={() => handleSwitchTeam(1)}
+                />
 
+                <TeamColumn 
+                    teamName="Đội Xanh"
+                    teamColor="blue"
+                    players={team2Players}
+                    currentUserId={auth.id}
+                    hostId={room.hostId}
+                    onJoin={() => handleSwitchTeam(2)}
+                />
+
+            </div>
+
+            {/* Footer Actions */}
+            <div className="w-full max-w-4xl flex gap-4 sticky bottom-4 z-10">
+                <button
+                    onClick={handleLeaveRoom}
+                    className="flex-1 py-4 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl shadow-lg transition active:scale-95"
+                >
+                    🚪 Rời Phòng
+                </button>
+
+                {isHost ? (
                     <button
-                        onClick={handleLeaveRoom}
-                        className="flex-1 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                        onClick={handleStartGame}
+                        className={`flex-[2] py-4 text-white text-xl font-bold rounded-xl shadow-lg transition transform 
+                            ${(team1Players.length > 0 && team2Players.length > 0) 
+                                ? 'bg-green-500 hover:bg-green-600 hover:-translate-y-1' 
+                                : 'bg-green-300 cursor-not-allowed'
+                            }`}
                     >
-                        Rời phòng
+                        🚀 BẮT ĐẦU TRẬN ĐẤU
                     </button>
-                </div>
+                ) : (
+                    <div className="flex-[2] py-4 bg-gray-700 text-gray-400 text-xl font-bold rounded-xl shadow-lg text-center flex items-center justify-center gap-2">
+                        <span className="animate-pulse">⏳</span> Đợi chủ phòng...
+                    </div>
+                )}
             </div>
         </div>
     );
