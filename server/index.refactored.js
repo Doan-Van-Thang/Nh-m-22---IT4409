@@ -62,12 +62,9 @@ function handleShutdown() {
     server.close(() => {
         logger.info('HTTP server closed');
 
-        mongoose.connection.close().then(() => {
+        mongoose.connection.close(false, () => {
             logger.info('MongoDB connection closed');
             process.exit(0);
-        }).catch((err) => {
-            logger.error('Error closing MongoDB connection:', err);
-            process.exit(1);
         });
     });
 
