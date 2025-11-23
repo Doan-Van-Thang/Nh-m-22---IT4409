@@ -143,8 +143,15 @@ export class Game {
                 alert(`ĐỘI ${data.winningTeamId} THẮNG!`);
             }
 
+            // Navigate back to lobby if room data is provided
             if (this.navigateTo) {
-                this.navigateTo(this.SCREENS.MAIN_MENU);
+                if (data.room) {
+                    // Room data available, go back to lobby
+                    this.navigateTo(this.SCREENS.LOBBY);
+                } else {
+                    // No room data, go to main menu
+                    this.navigateTo(this.SCREENS.MAIN_MENU);
+                }
             }
 
         }

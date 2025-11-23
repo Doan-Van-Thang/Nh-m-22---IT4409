@@ -98,21 +98,29 @@ export default class NetworkManager {
                         break;
                     }
                     case 'startGame':
-                        this.roomManager.handleStartGame(room.id, player.id);
-                        // gameManager sẽ broadcast 'gameStarted'
+                        try {
+                            await this.roomManager.handleStartGame(room.id, player.id);
+                            // gameManager sẽ broadcast 'gameStarted'
+                        } catch (error) {
+                            console.error('[NetworkManager] Start game error:', error);
+                            ws.send(JSON.stringify({
+                                type: 'error',
+                                message: error.message
+                            }));
+                        }
                         break;
                     case 'switchTeam': {
                         const roomId = this.roomManager.playerToRoom.get(player.id);
                         const room = this.roomManager.rooms.get(roomId);
 
-                        if(room){
-                            try{
+                        if (room) {
+                            try {
                                 room.switchPlayerTeam(player.id, data.teamId);
                                 this.broadcastToRoom(roomId, {
                                     type: 'roomUpdate',
                                     room: room.getState()
                                 });
-                            } catch(err){
+                            } catch (err) {
                                 console.log(err.message);
                             }
                         }
@@ -141,7 +149,8 @@ export default class NetworkManager {
                     this.clients.set(ws, {
                         id: loginData.id,
                         name: loginData.name,
-                        avatarUrl: loginData.avatarUrl
+                        avatarUrl: loginData.avatarUrl,
+                        highScore: loginData.highScore
                     });
                     ws.send(JSON.stringify({ type: 'loginSuccess', ...loginData }));
                     break;
@@ -157,7 +166,8 @@ export default class NetworkManager {
                         this.clients.set(ws, {
                             id: account._id,
                             name: account.name,
-                            avatarUrl: account.avatarUrl
+                            avatarUrl: account.avatarUrl,
+                            highScore: account.highScore
                         });
 
                         ws.send(JSON.stringify({
@@ -201,7 +211,13 @@ export default class NetworkManager {
 
                 case 'createRoom':
                     if (!player) throw new Error("Chưa xác thực.");
-                    const newRoom = this.roomManager.handleCreateRoom(player);
+                    const roomConfig = {
+                        name: data.name,
+                        gameMode: data.gameMode,
+                        maxPlayers: data.maxPlayers,
+                        bettingPoints: data.bettingPoints
+                    };
+                    const newRoom = this.roomManager.handleCreateRoom(player, roomConfig);
                     ws.send(JSON.stringify({ type: 'joinRoomSuccess', room: newRoom.getState() }));
                     this.broadcastRoomList(); // Cập nhật sảnh cho mọi người
                     break;
@@ -218,7 +234,7 @@ export default class NetworkManager {
                     this.broadcastRoomList(); // Cập nhật sảnh
                     break;
 
-                
+
             }
         } catch (error) {
             ws.send(JSON.stringify({ type: 'authError', message: error.message }));
@@ -241,12 +257,33 @@ export default class NetworkManager {
         });
     }
     // Gửi sự kiện kết thúc game
-    broadcastEndGame(roomId, winningTeamId) {
+    async broadcastEndGame(roomId, winningTeamId) {
+        const room = this.roomManager.rooms.get(roomId);
+
+        // Distribute betting points to winners
+        if (room && room.bettingPoints > 0) {
+            try {
+                await room.distributeBettingPoints(this.authManager, winningTeamId, this);
+            } catch (error) {
+                console.error('[NetworkManager] Failed to distribute betting points:', error);
+            }
+        }
+
+        // Reset room status back to waiting
+        if (room) {
+            room.status = 'waiting';
+            console.log(`[NetworkManager] Room ${roomId} status reset to waiting`);
+        }
+
         const payload = JSON.stringify({
             type: 'gameOver',
-            winningTeamId: winningTeamId
+            winningTeamId: winningTeamId,
+            room: room ? room.getState() : null // Send updated room state
         });
         this.broadcastToRoom(roomId, payload, null);
+
+        // Broadcast updated room list to lobby
+        this.broadcastRoomList();
     }
     // Gửi cập nhật danh sách phòng (sảnh)
     broadcastRoomList() {
@@ -287,6 +324,38 @@ export default class NetworkManager {
         }
         console.warn(`[NetworkManager] Không tìm thấy client cho playerId ${playerId} để gửi tin.`);
     }
+
+    sendPointsUpdate(playerId, newPoints) {
+        // Update player's highScore in clients map
+        for (const [ws, playerInfo] of this.clients.entries()) {
+            if (playerInfo.id === playerId) {
+                playerInfo.highScore = newPoints;
+                break;
+            }
+        }
+
+        // Update player points in their current room
+        const roomId = this.roomManager.playerToRoom.get(playerId);
+        if (roomId) {
+            const room = this.roomManager.rooms.get(roomId);
+            if (room) {
+                room.updatePlayerPoints(playerId, newPoints);
+                // Broadcast updated room state to all players in the room
+                this.broadcastToRoom(roomId, {
+                    type: 'roomUpdate',
+                    room: room.getState()
+                });
+            }
+        }
+
+        // Send points update to the specific player
+        this.sendToPlayer(playerId, {
+            type: 'pointsUpdate',
+            playerId: playerId,
+            newPoints: newPoints
+        });
+    }
+
     reset() {
         this.clients.clear();
         console.log("[NetworkManager] Đã reset trạng thái clients");

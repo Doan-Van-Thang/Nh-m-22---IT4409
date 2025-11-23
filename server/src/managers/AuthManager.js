@@ -56,4 +56,46 @@ export default class AuthManager {
 
         return { token, username: account.username, id: account._id, highScore: account.highScore, name: account.name, province: account.province, avatarUrl: account.avatarUrl };
     }
+
+    // Deduct points from a player
+    async deductPoints(playerId, points) {
+        const account = await Account.findById(playerId);
+        if (!account) {
+            throw new Error('Người chơi không tồn tại');
+        }
+
+        if (account.highScore < points) {
+            throw new Error(`Không đủ điểm. Cần ${points} điểm nhưng chỉ có ${account.highScore} điểm.`);
+        }
+
+        account.highScore -= points;
+        await account.save();
+        return account.highScore;
+    }
+
+    // Add points to a player
+    async addPoints(playerId, points) {
+        const account = await Account.findById(playerId);
+        if (!account) {
+            throw new Error('Người chơi không tồn tại');
+        }
+
+        account.highScore += points;
+        await account.save();
+        return account.highScore;
+    }
+
+    // Update player's high score (existing functionality)
+    async updateHighScore(playerId, newScore) {
+        const account = await Account.findById(playerId);
+        if (!account) {
+            throw new Error('Người chơi không tồn tại');
+        }
+
+        if (newScore > account.highScore) {
+            account.highScore = newScore;
+            await account.save();
+        }
+        return account.highScore;
+    }
 }

@@ -34,10 +34,11 @@ async function startServer() {
         const authManager = new AuthManager();
         const networkManager = new NetworkManager(server, authManager);
         const gameManager = new GameManager(networkManager);
-        const roomManager = new RoomManager(gameManager);
+        const roomManager = new RoomManager(gameManager, authManager);
 
         // 3. Set up manager dependencies
         networkManager.setManagers(roomManager, gameManager);
+        roomManager.setNetworkManager(networkManager);
 
         // 4. Start network manager
         networkManager.start();

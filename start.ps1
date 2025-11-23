@@ -19,7 +19,8 @@ if ($null -eq $mongoProcess) {
     if ($continue -ne "y") {
         exit
     }
-} else {
+}
+else {
     Write-Host "OK: MongoDB is running" -ForegroundColor Green
 }
 
@@ -37,7 +38,8 @@ if ($null -ne $portInUse) {
         Write-Host "OK: Stopped process on port 5174" -ForegroundColor Green
         Start-Sleep -Seconds 1
     }
-} else {
+}
+else {
     Write-Host "OK: Port 5174 is available" -ForegroundColor Green
 }
 
@@ -48,9 +50,9 @@ Write-Host "[3/4] Starting Server..." -ForegroundColor Green
 $serverPath = "d:\WEB\BTL\Main\server"
 Write-Host "   Path: $serverPath" -ForegroundColor Gray
 
-# Create new terminal for server
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$serverPath'; Write-Host '=== SERVER STARTING ===' -ForegroundColor Cyan; npm start"
-Write-Host "OK: Server is starting in new terminal" -ForegroundColor Green
+# Create new terminal for server with nodemon for auto-restart
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$serverPath'; Write-Host '=== SERVER STARTING (with auto-restart) ===' -ForegroundColor Cyan; npm run dev"
+Write-Host "OK: Server is starting in new terminal (with nodemon)" -ForegroundColor Green
 Start-Sleep -Seconds 3
 
 Write-Host ""

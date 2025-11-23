@@ -1,5 +1,6 @@
 // File: client/src/components/MainMenu.jsx
-import React, { useEffect } from 'react'; // [SỬA] Import thêm useEffect
+import React, { useEffect, useState } from 'react'; // [SỬA] Import thêm useEffect và useState
+import CreateRoomModal from './CreateRoomModal.jsx';
 // === CÁC ICON (Sử dụng SVG placeholder, bạn có thể thay bằng thư viện icon) ===
 const BellIcon = () => (
     <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,39 +118,66 @@ const Leaderboard = ({ leaderboard }) => {
 
 // ===== 3. COMPONENT NỘI DUNG CHÍNH (DANH SÁCH PHÒNG) (ĐÃ CẬP NHẬT) =====
 // [SỬA] Nhận prop `onPlay`
-const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth }) => {
-    // Mock data cho các phòng
-
+const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth, onOpenCreateModal }) => {
+    const getGameModeLabel = (mode) => {
+        const modes = {
+            '1V1': '1 vs 1',
+            '2V2': '2 vs 2',
+            'DEATHMATCH': 'Sinh tử chiến',
+            'TEAM_DEATHMATCH': 'Đội sinh tử'
+        };
+        return modes[mode] || mode;
+    };
 
     return (
         <div className="p-6">
             <h1 className="text-3xl font-bold mb-6">Chọn phòng (Lobby)</h1>
 
-            {/* === [THÊM MỚI] NÚT CHƠI NGAY === */}
+            {/* === [THÊM MỚI] NÚT TẠO PHÒNG === */}
             <button
-                onClick={() => onCreateRoom(`Phòng của ${auth.name}`)} // Sửa hàm onClick
-                className="w-full py-4 mb-8 bg-green-500 ..."
+                onClick={onOpenCreateModal}
+                className="w-full py-4 mb-8 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl shadow-lg transition-all text-xl"
             >
-                Tạo phòng mới
+                + Tạo phòng mới
             </button>
             {/* === KẾT THÚC NÚT MỚI === */}
 
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {roomList.length === 0 && <p>Không có phòng nào.</p>}
+                {roomList.length === 0 && <p className="text-gray-500 text-center col-span-3">Không có phòng nào.</p>}
                 {roomList.map((room) => (
                     <div
                         key={room.id}
-                        className="bg-white p-5 rounded-xl ..."
+                        className="bg-white p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-2 border-gray-200"
                     >
-                        <h3 className="text-xl ...">{room.name}</h3>
-                        <p className="text-gray-600 mb-4">
-                            Số người chơi: {room.playerCount}/{room.maxPlayers}
-                        </p>
+                        <div className="flex justify-between items-start mb-3">
+                            <h3 className="text-xl font-bold text-gray-800 flex-1">{room.name}</h3>
+                            {room.bettingPoints > 0 && (
+                                <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                    <CoinIcon />
+                                    {room.bettingPoints}
+                                </span>
+                            )}
+                        </div>
+                        <div className="space-y-2 mb-4">
+                            <p className="text-sm text-gray-600">
+                                <span className="font-semibold">Chế độ:</span> {getGameModeLabel(room.gameMode)}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                <span className="font-semibold">Người chơi:</span> {room.playerCount}/{room.maxPlayers}
+                            </p>
+                            {room.status && (
+                                <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${room.status === 'waiting' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                    {room.status === 'waiting' ? 'Đang chờ' : 'Đang chơi'}
+                                </span>
+                            )}
+                        </div>
                         <button
-                            onClick={() => onJoinRoom(room.id)} // Sửa hàm onClick
-                            className="w-full px-4 py-2 bg-blue-500 ...">
-                            Vào phòng
+                            onClick={() => onJoinRoom(room.id)}
+                            disabled={room.status === 'in-game' || room.playerCount >= room.maxPlayers}
+                            className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors">
+                            {room.status === 'in-game' ? 'Đang chơi' : room.playerCount >= room.maxPlayers ? 'Đã đầy' : 'Vào phòng'}
                         </button>
                     </div>
                 ))}
@@ -159,6 +187,8 @@ const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth }) => {
 };
 
 export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onLogout, socket, leaderboard }) {
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
     // [MỚI] Thêm useEffect để gửi yêu cầu lấy leaderboard khi component được hiển thị
     useEffect(() => {
         // Hàm để gửi yêu cầu
@@ -183,6 +213,12 @@ export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onL
 
     return (
         <div className="flex h-screen bg-gray-100">
+            <CreateRoomModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onCreateRoom={onCreateRoom}
+                userPoints={auth?.highScore || 0}
+            />
 
             {/* === CỘT 1: SIDEBAR === */}
             <aside className="w-1/4 h-screen p-4 overflow-y-auto">
@@ -201,6 +237,7 @@ export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onL
                         onJoinRoom={onJoinRoom}
                         roomList={roomList}
                         auth={auth}
+                        onOpenCreateModal={() => setIsCreateModalOpen(true)}
                     />
                 </div>
             </main>

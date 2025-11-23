@@ -82,8 +82,24 @@ function AppContent() {
                     setLeaderboard(data.payload);
                     break;
 
+                case MESSAGE_TYPES.POINTS_UPDATE:
+                    // Update user's points in real-time
+                    if (auth && auth.id === data.playerId) {
+                        const updatedAuth = { ...auth, highScore: data.newPoints };
+                        login(updatedAuth);
+                    }
+                    break;
+
                 case MESSAGE_TYPES.INITIAL_SETUP:
                     setInitialPlayerSetup(data);
+                    break;
+
+                case 'gameOver':
+                    // Handle game over - update room if provided
+                    if (data.room) {
+                        setCurrentRoom(data.room);
+                        // Screen transition will be handled by Game.js navigation
+                    }
                     break;
 
                 default:
@@ -166,8 +182,15 @@ function AppContent() {
         setScreen(SCREENS.LOGIN);
     };
 
-    const handleCreateRoom = (roomName) => {
-        send({ type: MESSAGE_TYPES.CREATE_ROOM, name: roomName });
+    const handleCreateRoom = (roomConfig) => {
+        // roomConfig contains: { name, gameMode, maxPlayers, bettingPoints }
+        send({
+            type: MESSAGE_TYPES.CREATE_ROOM,
+            name: roomConfig.name,
+            gameMode: roomConfig.gameMode,
+            maxPlayers: roomConfig.maxPlayers,
+            bettingPoints: roomConfig.bettingPoints
+        });
     };
 
     const handleJoinRoom = (roomId) => {

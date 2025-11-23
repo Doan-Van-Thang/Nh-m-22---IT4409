@@ -38,6 +38,9 @@ export const MESSAGE_TYPES = {
     GET_LEADERBOARD: 'getLeaderboard',
     LEADERBOARD_DATA: 'leaderboardData',
 
+    // Points
+    POINTS_UPDATE: 'pointsUpdate',
+
     // Errors
     ERROR: 'error',
     LOBBY_ERROR: 'lobbyError',
