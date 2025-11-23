@@ -21,7 +21,7 @@ const VIETNAM_PROVINCES = [
 ];
 
 // Nhận onRegister (từ App.jsx) và navigateTo (để quay lại Login)
-function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
+function RegisterScreen({ onRegister, navigateTo, SCREENS, toast }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,13 +34,13 @@ function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
 
         // 1. Kiểm tra mật khẩu có khớp không
         if (password !== confirmPassword) {
-            alert("Mật khẩu không khớp! Vui lòng nhập lại.");
+            toast.error("Mật khẩu không khớp! Vui lòng nhập lại.");
             return;
         }
 
         // 2. (Tùy chọn) Kiểm tra độ dài mật khẩu phía client
         if (password.length < 6) {
-            alert("Mật khẩu phải có ít nhất 6 ký tự.");
+            toast.warning("Mật khẩu phải có ít nhất 6 ký tự.");
             return;
         }
 
@@ -95,12 +95,12 @@ function RegisterScreen({ onRegister, navigateTo, SCREENS }) {
                     />
                     <div className='relative'>
                         <select
-                           value={province}
-                           onChange={(e) => setProvince(e.target.value)}
-                           required
-                           className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white'
+                            value={province}
+                            onChange={(e) => setProvince(e.target.value)}
+                            required
+                            className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white'
                         >
-                            <option value = "" disabled>--Chọn Tỉnh/Thành phố --</option>
+                            <option value="" disabled>--Chọn Tỉnh/Thành phố --</option>
                             {VIETNAM_PROVINCES.map((prov) => (
                                 <option key={prov} value={prov}>
                                     {prov}

@@ -10,8 +10,10 @@ import LoginScreen from './components/LoginScreen.jsx';
 import RegisterScreen from './components/RegisterScreen.jsx';
 import LobbyScreen from './components/LobbyScreen.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import { ToastContainer } from './components/Toast.jsx';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext.jsx';
 import { SocketProvider, useSocketContext } from './contexts/SocketContext.jsx';
+import { useToast } from './hooks/useToast.js';
 import { SCREENS } from './config/constants.js';
 import MESSAGE_TYPES from './config/messageTypes.js';
 import { logger } from './utils/logger.js';
@@ -22,6 +24,7 @@ import { logger } from './utils/logger.js';
 function AppContent() {
     const { auth, login, logout, isAuthenticated } = useAuthContext();
     const { socket, send, addMessageListener, isConnected } = useSocketContext();
+    const { toasts, removeToast, toast } = useToast();
 
     const [screen, setScreen] = useState(SCREENS.LOGIN);
     const [roomList, setRoomList] = useState([]);
@@ -48,7 +51,7 @@ function AppContent() {
 
                 case MESSAGE_TYPES.REGISTER_SUCCESS:
                     setScreen(SCREENS.LOGIN);
-                    alert('Registration successful! Please log in.');
+                    toast.success('Registration successful! Please log in.');
                     break;
 
                 case MESSAGE_TYPES.AUTH_ERROR:
@@ -119,7 +122,7 @@ function AppContent() {
         };
         login(authData);
         setScreen(SCREENS.MAIN_MENU);
-        alert('Login successful!');
+        toast.success('Login successful!');
     };
 
     const handleAuthSuccess = (data) => {
@@ -137,7 +140,7 @@ function AppContent() {
     };
 
     const handleAuthError = (data) => {
-        alert(`Error: ${data.message}`);
+        toast.error(`Error: ${data.message}`);
         if (isAuthenticated) {
             handleLogout();
         }
@@ -190,6 +193,7 @@ function AppContent() {
                         onRegister={handleRegister}
                         navigateTo={navigateTo}
                         SCREENS={SCREENS}
+                        toast={toast}
                     />
                 );
 
@@ -201,6 +205,7 @@ function AppContent() {
                         socket={socket}
                         navigateTo={navigateTo}
                         SCREENS={SCREENS}
+                        toast={toast}
                     />
                 );
 
@@ -227,6 +232,7 @@ function AppContent() {
                         SCREENS={SCREENS}
                         initialPlayerSetup={initialPlayerSetup}
                         initialMapData={initialMapData}
+                        toast={toast}
                     />
                 );
 
@@ -243,6 +249,7 @@ function AppContent() {
 
     return (
         <div style={{ width: '100%', height: '100%' }}>
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
             {renderScreen()}
         </div>
     );

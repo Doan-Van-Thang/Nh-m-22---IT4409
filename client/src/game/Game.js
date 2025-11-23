@@ -11,11 +11,12 @@ import { SocketClient } from "./SocketClient.js";
 
 export class Game {
     // [SỬA] Nhận thêm `socket`
-    constructor(canvas, ctx, navigateTo, SCREENS, socket, initialMapData, initialPlayerSetup) {
+    constructor(canvas, ctx, navigateTo, SCREENS, socket, initialMapData, initialPlayerSetup, toast) {
         this.canvas = canvas;
         this.ctx = ctx;
         this.navigateTo = navigateTo;
         this.SCREENS = SCREENS;
+        this.toast = toast;
 
         this.tanks = new Map();
         this.bullets = new Map();
@@ -136,7 +137,11 @@ export class Game {
 
         if (data.type === 'gameOver') {
             this.stop();
-            alert(`ĐỘI ${data.winningTeamId} THẮNG!`);
+            if (this.toast) {
+                this.toast.success(`ĐỘI ${data.winningTeamId} THẮNG!`, 5000);
+            } else {
+                alert(`ĐỘI ${data.winningTeamId} THẮNG!`);
+            }
 
             if (this.navigateTo) {
                 this.navigateTo(this.SCREENS.MAIN_MENU);

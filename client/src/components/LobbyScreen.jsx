@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
-import PlayerCard from './PlayerCard'; 
+import PlayerCard from './PlayerCard';
 
 // Component hiển thị cột cho từng đội 
-const TeamColumn = ({ 
-    teamName, 
+const TeamColumn = ({
+    teamName,
     teamColor, // 'red' hoặc 'blue'
-    players, 
-    currentUserId, 
-    onJoin, 
-    hostId 
+    players,
+    currentUserId,
+    onJoin,
+    hostId
 }) => {
     const isMyTeam = players.find(p => p.id === currentUserId);
-    
+
     // Cấu hình màu sắc dựa trên teamColor
     const colors = {
         red: {
@@ -29,13 +29,13 @@ const TeamColumn = ({
             <h2 className={`text-2xl font-bold ${colors.title} text-center mb-4 uppercase tracking-wider`}>
                 {teamName} ({players.length})
             </h2>
-            
+
             <div className="flex-1 space-y-2 min-h-[200px]">
                 {players.map(p => (
-                    <PlayerCard 
-                        key={p.id} 
-                        player={p} 
-                        isHost={p.id === hostId} 
+                    <PlayerCard
+                        key={p.id}
+                        player={p}
+                        isHost={p.id === hostId}
                     />
                 ))}
                 {players.length === 0 && (
@@ -47,7 +47,7 @@ const TeamColumn = ({
 
             <div className="mt-4 text-center">
                 {currentUserId && !isMyTeam && (
-                    <button 
+                    <button
                         onClick={onJoin}
                         className={`w-full py-3 ${colors.btn} text-white font-bold rounded-lg shadow transition transform active:scale-95`}
                     >
@@ -64,8 +64,8 @@ const TeamColumn = ({
     );
 };
 
-function LobbyScreen({ auth, room, socket, navigateTo, SCREENS }) {
-  
+function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
+
     useEffect(() => {
         if (!room) {
             navigateTo(SCREENS.MAIN_MENU);
@@ -80,7 +80,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS }) {
 
     const handleStartGame = () => {
         if (team1Players.length === 0 || team2Players.length === 0) {
-            alert("Cần ít nhất 1 người mỗi đội để bắt đầu!"); 
+            toast.warning("Cần ít nhất 1 người mỗi đội để bắt đầu!");
             return;
         }
         socket.send({ type: 'startGame' });
@@ -113,8 +113,8 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS }) {
 
             {/* Khu vực chia đội (Grid layout) */}
             <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-1">
-                
-                <TeamColumn 
+
+                <TeamColumn
                     teamName="Đội Đỏ"
                     teamColor="red"
                     players={team1Players}
@@ -123,7 +123,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS }) {
                     onJoin={() => handleSwitchTeam(1)}
                 />
 
-                <TeamColumn 
+                <TeamColumn
                     teamName="Đội Xanh"
                     teamColor="blue"
                     players={team2Players}
@@ -147,8 +147,8 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS }) {
                     <button
                         onClick={handleStartGame}
                         className={`flex-[2] py-4 text-white text-xl font-bold rounded-xl shadow-lg transition transform 
-                            ${(team1Players.length > 0 && team2Players.length > 0) 
-                                ? 'bg-green-500 hover:bg-green-600 hover:-translate-y-1' 
+                            ${(team1Players.length > 0 && team2Players.length > 0)
+                                ? 'bg-green-500 hover:bg-green-600 hover:-translate-y-1'
                                 : 'bg-green-300 cursor-not-allowed'
                             }`}
                     >
