@@ -126,6 +126,44 @@ export default class NetworkManager {
                         }
                         break;
                     }
+                    case 'updateRoomSettings': {
+                        const roomId = this.roomManager.playerToRoom.get(player.id);
+                        const room = this.roomManager.rooms.get(roomId);
+
+                        if (room) {
+                            // Only host can update settings
+                            if (room.hostId !== player.id) {
+                                ws.send(JSON.stringify({
+                                    type: 'error',
+                                    message: 'Chỉ chủ phòng mới có thể thay đổi cài đặt!'
+                                }));
+                                break;
+                            }
+
+                            try {
+                                room.updateSettings({
+                                    gameMode: data.gameMode,
+                                    maxPlayers: data.maxPlayers,
+                                    bettingPoints: data.bettingPoints
+                                });
+
+                                // Broadcast updated room to all players
+                                this.broadcastToRoom(roomId, {
+                                    type: 'roomUpdate',
+                                    room: room.getState()
+                                });
+
+                                // Update room list
+                                this.broadcastRoomList();
+                            } catch (err) {
+                                ws.send(JSON.stringify({
+                                    type: 'error',
+                                    message: err.message
+                                }));
+                            }
+                        }
+                        break;
+                    }
                 }
             } catch (error) {
                 ws.send(JSON.stringify({ type: 'lobbyError', message: error.message }));

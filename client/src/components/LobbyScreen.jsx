@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import PlayerCard from './PlayerCard';
+import RoomSettingsEditor from './RoomSettingsEditor';
 
 // Component hiển thị cột cho từng đội 
 const TeamColumn = ({
@@ -65,6 +66,7 @@ const TeamColumn = ({
 };
 
 function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     useEffect(() => {
         if (!room) {
@@ -94,8 +96,24 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
         socket.send({ type: 'switchTeam', teamId: teamId });
     };
 
+    const handleUpdateSettings = (settings) => {
+        socket.send({
+            type: 'updateRoomSettings',
+            ...settings
+        });
+        toast.success('Đã cập nhật cài đặt phòng!');
+    };
+
     return (
         <div className="min-h-screen bg-gray-800 p-4 flex flex-col items-center">
+            <RoomSettingsEditor
+                room={room}
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                onUpdateSettings={handleUpdateSettings}
+                userPoints={auth?.highScore || 0}
+            />
+
             {/* Header Phòng */}
             <div className="bg-white w-full max-w-4xl p-4 rounded-xl shadow-lg mb-6 animate-fade-in-down">
                 <div className="flex justify-between items-start mb-4">
@@ -105,10 +123,21 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                         </h1>
                         <p className="text-gray-500 text-sm">ID Phòng: <span className="font-mono font-bold">{room.id}</span></p>
                     </div>
-                    <div className="text-2xl font-black bg-gray-100 px-4 py-2 rounded-lg shadow-inner">
-                        <span className="text-red-600">{team1Players.length}</span>
-                        <span className="mx-3 text-gray-300">VS</span>
-                        <span className="text-blue-600">{team2Players.length}</span>
+                    <div className="flex items-center gap-3">
+                        <div className="text-2xl font-black bg-gray-100 px-4 py-2 rounded-lg shadow-inner">
+                            <span className="text-red-600">{team1Players.length}</span>
+                            <span className="mx-3 text-gray-300">VS</span>
+                            <span className="text-blue-600">{team2Players.length}</span>
+                        </div>
+                        {isHost && (
+                            <button
+                                onClick={() => setIsSettingsOpen(true)}
+                                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2"
+                                title="Cài đặt phòng"
+                            >
+                                ⚙️ Chỉnh sửa
+                            </button>
+                        )}
                     </div>
                 </div>
 

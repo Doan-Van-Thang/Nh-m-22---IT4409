@@ -84,6 +84,25 @@ export default class Room {
         }
     }
 
+    // Update room settings (only by host)
+    updateSettings(newSettings) {
+        const { gameMode, maxPlayers, bettingPoints } = newSettings;
+
+        if (gameMode) {
+            this.gameMode = gameMode;
+        }
+
+        if (maxPlayers && maxPlayers >= this.players.size) {
+            this.maxPlayers = maxPlayers;
+        }
+
+        if (bettingPoints !== undefined) {
+            this.bettingPoints = bettingPoints;
+        }
+
+        console.log(`[Room ${this.id}] Settings updated:`, { gameMode: this.gameMode, maxPlayers: this.maxPlayers, bettingPoints: this.bettingPoints });
+    }
+
     // Deduct betting points from all players (called when game starts)
     async deductBettingPoints(authManager, networkManager) {
         if (this.bettingPoints === 0) return true;
