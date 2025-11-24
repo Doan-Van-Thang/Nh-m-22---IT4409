@@ -1,6 +1,7 @@
 export class Tank {
-    constructor(ctx) {
+    constructor(ctx, teamId = 1) {
         this.ctx = ctx;
+        this.teamId = teamId;
         this.state = {
             id: null,
             x: 0,
@@ -8,7 +9,8 @@ export class Tank {
             angleBody: 0,
             angleTurret: 0,
             health: 100,
-            radius: 25, // [SỬA LẠI] radius mặc định
+            radius: 25,
+            teamId: teamId
         };
     }
 
@@ -20,62 +22,179 @@ export class Tank {
         this.state.angleBody = serverState.rotation;
         this.state.angleTurret = serverState.rotation;
         this.state.health = serverState.health;
-        this.state.radius = serverState.radius; // [SỬA LẠI] Nhận radius từ server
+        this.state.radius = serverState.radius;
+        this.state.teamId = serverState.teamId || this.teamId;
     }
 
     draw() {
-        // [SỬA TOÀN BỘ HÀM DRAW]
-        const { x, y, angleBody, angleTurret, health, radius } = this.state;
+        const { x, y, angleBody, angleTurret, health, radius, teamId } = this.state;
+        const ctx = this.ctx;
 
-        // (x, y) giờ là tâm của xe tăng
+        // Team colors
+        const teamColors = {
+            1: { body: '#e74c3c', dark: '#c0392b', track: '#8b0000' },  // Red team
+            2: { body: '#3498db', dark: '#2980b9', track: '#00008b' }   // Blue team
+        };
+        const colors = teamColors[teamId] || teamColors[1];
 
-        // 1. Vẽ thân xe tăng (Hình tròn)
-        this.ctx.save();
-        this.ctx.translate(x, y); // Di chuyển gốc tọa độ về tâm xe tăng
-        this.ctx.rotate(angleBody);           // Xoay
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angleBody);
 
-        this.ctx.fillStyle = 'red';
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, radius, 0, Math.PI * 2); // Vẽ hình tròn tại (0,0)
-        this.ctx.fill();
+        // Draw shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
 
-        this.ctx.restore(); // Trả lại gốc tọa độ
+        // Draw tank tracks (left and right)
+        const trackWidth = radius * 0.5;
+        const trackLength = radius * 1.6;
 
-        // 2. Vẽ tháp pháo (Nòng súng)
-        this.ctx.strokeStyle = 'darkgreen';
-        this.ctx.lineWidth = 10;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x, y); // Bắt đầu từ tâm
-        this.ctx.lineTo(
-            x + Math.cos(angleTurret) * (radius + 15), // Kéo dài nòng súng ra ngoài bán kính
-            y + Math.sin(angleTurret) * (radius + 15)
-        );
-        this.ctx.stroke();
-
-        // --- [THÊM MỚI] VẼ THANH MÁU ---
-        if (health <= 100) { // Chỉ vẽ nếu không đầy máu
-
-            console.log(`[DRAW] Drawing health bar with health: ${health}`);
-            const barWidth = radius * 2;
-            const barHeight = 8;
-            const barX = x - radius;
-            const barY = y - radius - 15; // 15px phía trên xe tăng
-
-            // [BƯỚC 3] VẼ VIỀN (VẼ SAU CÙNG ĐỂ NỔI LÊN TRÊN)
-            this.ctx.strokeStyle = '#333';
-            this.ctx.strokeRect(barX, barY, barWidth, barHeight);
-
-            // [BƯỚC 1] VẼ NỀN (MÀU ĐỎ)
-            this.ctx.fillStyle = '#dc3545'; // Màu đỏ đậm
-            this.ctx.fillRect(barX, barY, barWidth, barHeight);
-
-            // [BƯỚC 2] VẼ MÁU HIỆN TẠI (MÀU XANH)
-            const healthPercent = health / 100;
-            this.ctx.fillStyle = '#28a745'; // Màu xanh lá
-            this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
-
-
+        // Left track
+        ctx.fillStyle = colors.track;
+        ctx.fillRect(-trackLength / 2, -radius - trackWidth / 2, trackLength, trackWidth);
+        // Track details
+        for (let i = 0; i < 5; i++) {
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-trackLength / 2 + (i * trackLength / 4), -radius - trackWidth / 2);
+            ctx.lineTo(-trackLength / 2 + (i * trackLength / 4), -radius + trackWidth / 2);
+            ctx.stroke();
         }
-        // --- KẾT THÚC PHẦN THÊM MỚI ---
+
+        // Right track
+        ctx.fillStyle = colors.track;
+        ctx.fillRect(-trackLength / 2, radius - trackWidth / 2, trackLength, trackWidth);
+        // Track details
+        for (let i = 0; i < 5; i++) {
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-trackLength / 2 + (i * trackLength / 4), radius - trackWidth / 2);
+            ctx.lineTo(-trackLength / 2 + (i * trackLength / 4), radius + trackWidth / 2);
+            ctx.stroke();
+        }
+
+        // Draw tank body with gradient
+        const gradient = ctx.createRadialGradient(-5, -5, 0, 0, 0, radius);
+        gradient.addColorStop(0, colors.body);
+        gradient.addColorStop(1, colors.dark);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.9, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body outline
+        ctx.strokeStyle = colors.dark;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Reset shadow for other elements
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Draw details on body
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.arc(-5, -5, radius * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        // Draw turret base (rotates with turret)
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angleTurret);
+
+        // Turret base circle
+        const turretGradient = ctx.createRadialGradient(-3, -3, 0, 0, 0, radius * 0.6);
+        turretGradient.addColorStop(0, colors.body);
+        turretGradient.addColorStop(1, colors.dark);
+
+        ctx.fillStyle = turretGradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = colors.dark;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw cannon barrel with 3D effect
+        const barrelLength = radius + 20;
+        const barrelWidth = 8;
+
+        // Barrel shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(0, -barrelWidth / 2 + 2, barrelLength, barrelWidth);
+
+        // Barrel gradient
+        const barrelGradient = ctx.createLinearGradient(0, -barrelWidth / 2, 0, barrelWidth / 2);
+        barrelGradient.addColorStop(0, '#2c3e50');
+        barrelGradient.addColorStop(0.5, '#34495e');
+        barrelGradient.addColorStop(1, '#1a252f');
+
+        ctx.fillStyle = barrelGradient;
+        ctx.fillRect(0, -barrelWidth / 2, barrelLength, barrelWidth);
+
+        // Barrel outline
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(0, -barrelWidth / 2, barrelLength, barrelWidth);
+
+        // Barrel tip highlight
+        ctx.fillStyle = '#95a5a6';
+        ctx.fillRect(barrelLength - 3, -barrelWidth / 2, 3, barrelWidth);
+
+        ctx.restore();
+
+        // Draw health bar with enhanced styling
+        if (health < 100) {
+            const barWidth = radius * 2.2;
+            const barHeight = 6;
+            const barX = x - barWidth / 2;
+            const barY = y - radius - 20;
+
+            // Health bar background with gradient
+            const bgGradient = ctx.createLinearGradient(barX, barY, barX, barY + barHeight);
+            bgGradient.addColorStop(0, '#2c3e50');
+            bgGradient.addColorStop(1, '#34495e');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+
+            // Health fill with color based on percentage
+            const healthPercent = health / 100;
+            let healthColor;
+            if (healthPercent > 0.6) {
+                healthColor = ctx.createLinearGradient(barX, barY, barX, barY + barHeight);
+                healthColor.addColorStop(0, '#2ecc71');
+                healthColor.addColorStop(1, '#27ae60');
+            } else if (healthPercent > 0.3) {
+                healthColor = ctx.createLinearGradient(barX, barY, barX, barY + barHeight);
+                healthColor.addColorStop(0, '#f39c12');
+                healthColor.addColorStop(1, '#e67e22');
+            } else {
+                healthColor = ctx.createLinearGradient(barX, barY, barX, barY + barHeight);
+                healthColor.addColorStop(0, '#e74c3c');
+                healthColor.addColorStop(1, '#c0392b');
+            }
+
+            ctx.fillStyle = healthColor;
+            ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+
+            // Health bar border
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+            // Shine effect
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight * 0.4);
+        }
     }
 }
