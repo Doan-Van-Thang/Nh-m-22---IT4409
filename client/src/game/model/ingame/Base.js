@@ -2,7 +2,7 @@
 export class Base {
     constructor(ctx, initialState) {
         this.ctx = ctx;
-        this.state = { ...initialState, health: 1000 };
+        this.state = { ...initialState, health: 200 };
         this.pulseTime = 0;
     }
 
@@ -126,7 +126,7 @@ export class Base {
         ctx.fillRect(barX, barY, barWidth, barHeight);
 
         // Health fill with glow effect
-        const healthPercent = health / 1000;
+        const healthPercent = health / 200;
         let healthGradient;
 
         if (healthPercent > 0.6) {

@@ -20,7 +20,7 @@ export default class World {
                         y: baseConfig.y,
                         width: baseConfig.width,
                         height: baseConfig.height,
-                        health: 1000
+                        health: 200 // Default health
                     });
                 }
             }
@@ -39,7 +39,7 @@ export default class World {
             this.mapHeight = 1500;
             const baseWidth = 100;
             const baseHeight = 100;
-            const baseHealth = 1000;
+            const baseHealth = 200;
             const paddingFromEdge = 150;
             const centerY = (this.mapHeight / 2) - (baseHeight / 2);
             this.bases = [

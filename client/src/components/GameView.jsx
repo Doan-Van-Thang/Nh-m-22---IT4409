@@ -42,11 +42,16 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
             if (data.type === 'gameOver') {
                 setGameOver(true);
                 setWinner(data.winner);
+
+                // Navigate back to lobby after 5 seconds
+                setTimeout(() => {
+                    navigateTo(SCREENS.LOBBY);
+                }, 5000);
             }
         };
 
         socket.addMessageListener(handleGameOver);
-    }, [socket]);
+    }, [socket, navigateTo, SCREENS]);
 
     // Update stats from game instance (throttled to 200ms for performance)
     useEffect(() => {

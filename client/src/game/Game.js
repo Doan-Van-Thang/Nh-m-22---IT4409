@@ -201,23 +201,7 @@ export class Game {
 
         if (data.type === 'gameOver') {
             this.stop();
-            if (this.toast) {
-                this.toast.success(`ĐỘI ${data.winningTeamId} THẮNG!`, 5000);
-            } else {
-                alert(`ĐỘI ${data.winningTeamId} THẮNG!`);
-            }
-
-            // Navigate back to lobby if room data is provided
-            if (this.navigateTo) {
-                if (data.room) {
-                    // Room data available, go back to lobby
-                    this.navigateTo(this.SCREENS.LOBBY);
-                } else {
-                    // No room data, go to main menu
-                    this.navigateTo(this.SCREENS.MAIN_MENU);
-                }
-            }
-
+            // Don't navigate here - let GameView.jsx handle it after showing game over screen
         }
     }
 

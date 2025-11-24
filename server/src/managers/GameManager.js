@@ -60,6 +60,13 @@ export default class GameManager {
             game.stop();
             this.activeGames.delete(roomId);
             console.log(`[GameManager] Đã xóa game của phòng ${roomId}.`);
+
+            // Reset room status back to waiting so a new game can be started
+            const room = this.networkManager.roomManager.rooms.get(roomId);
+            if (room) {
+                room.status = 'waiting';
+                console.log(`[GameManager] Đã reset trạng thái phòng ${roomId} về 'waiting'.`);
+            }
         }
     }
 
