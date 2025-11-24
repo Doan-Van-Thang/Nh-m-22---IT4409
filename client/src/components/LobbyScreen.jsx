@@ -105,7 +105,12 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-800 p-4 flex flex-col items-center">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 flex flex-col items-center relative overflow-hidden">
+            {/* Animated background elements */}
+            <div className="absolute top-0 left-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+
             <RoomSettingsEditor
                 room={room}
                 isOpen={isSettingsOpen}
@@ -115,24 +120,24 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
             />
 
             {/* Header Phòng */}
-            <div className="bg-white w-full max-w-4xl p-4 rounded-xl shadow-lg mb-6 animate-fade-in-down">
+            <div className="bg-gradient-to-br from-white to-gray-50 w-full max-w-4xl p-6 rounded-2xl shadow-2xl mb-6 animate-fade-in-down border-2 border-white/20 relative z-10">
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
                             🏠 {room.name}
                         </h1>
-                        <p className="text-gray-500 text-sm">ID Phòng: <span className="font-mono font-bold">{room.id}</span></p>
+                        <p className="text-gray-500 text-sm mt-1">ID Phòng: <span className="font-mono font-bold bg-gray-100 px-2 py-1 rounded">{room.id}</span></p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="text-2xl font-black bg-gray-100 px-4 py-2 rounded-lg shadow-inner">
-                            <span className="text-red-600">{team1Players.length}</span>
-                            <span className="mx-3 text-gray-300">VS</span>
-                            <span className="text-blue-600">{team2Players.length}</span>
+                        <div className="text-3xl font-black bg-gradient-to-r from-gray-100 to-gray-200 px-5 py-3 rounded-xl shadow-lg border-2 border-gray-300">
+                            <span className="text-red-600 animate-pulse">{team1Players.length}</span>
+                            <span className="mx-3 text-gray-400">VS</span>
+                            <span className="text-blue-600 animate-pulse">{team2Players.length}</span>
                         </div>
                         {isHost && (
                             <button
                                 onClick={() => setIsSettingsOpen(true)}
-                                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md flex items-center gap-2"
+                                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-5 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 transform hover:scale-105 active:scale-95"
                                 title="Cài đặt phòng"
                             >
                                 ⚙️ Chỉnh sửa
@@ -142,34 +147,28 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                 </div>
 
                 {/* Room Settings Info */}
-                <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-200">
-                    <div className="bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                        <span className="text-xs text-blue-600 font-semibold">Chế độ</span>
-                        <p className="text-sm font-bold text-blue-800">{room.gameMode || '2V2'}</p>
-                    </div>
-                    <div className="bg-purple-50 px-3 py-2 rounded-lg border border-purple-200">
-                        <span className="text-xs text-purple-600 font-semibold">Người chơi</span>
-                        <p className="text-sm font-bold text-purple-800">{room.players.length}/{room.maxPlayers}</p>
+                <div className="flex flex-wrap gap-3 pt-4 border-t-2 border-gray-200">\n                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 px-4 py-2 rounded-xl border-2 border-blue-200 shadow-sm">\n                        <span className="text-xs text-blue-600 font-bold block">Chế độ</span>
+                    <p className="text-sm font-bold text-blue-900 mt-1">{room.gameMode || '2V2'}</p>
+                </div>
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 px-4 py-2 rounded-xl border-2 border-purple-200 shadow-sm">\n                        <span className="text-xs text-purple-600 font-bold block">Người chơi</span>
+                        <p className="text-sm font-bold text-purple-900 mt-1">{room.players.length}/{room.maxPlayers}</p>
                     </div>
                     {room.bettingPoints > 0 && (
-                        <div className="bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-300">
-                            <span className="text-xs text-yellow-700 font-semibold">Điểm cược</span>
-                            <p className="text-sm font-bold text-yellow-900 flex items-center gap-1">
+                        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 px-4 py-2 rounded-xl border-2 border-yellow-300 shadow-sm animate-pulse-glow">\n                            <span className="text-xs text-yellow-700 font-bold block">Điểm cược</span>
+                            <p className="text-sm font-bold text-yellow-900 flex items-center gap-1 mt-1">
                                 🪙 {room.bettingPoints}
                             </p>
                         </div>
                     )}
                     {isHost && (
-                        <div className="bg-green-50 px-3 py-2 rounded-lg border border-green-200">
-                            <span className="text-xs text-green-700 font-semibold">👑 Bạn là chủ phòng</span>
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 px-4 py-2 rounded-xl border-2 border-green-200 shadow-sm">\n                            <span className="text-xs text-green-700 font-bold">👑 Bạn là chủ phòng</span>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Khu vực chia đội (Grid layout) */}
-            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-1">{/* Room Settings Info */}
-
+            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-1 relative z-10 animate-fade-in-up">
                 <TeamColumn
                     teamName="Đội Đỏ"
                     teamColor="red"
@@ -187,14 +186,13 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                     hostId={room.hostId}
                     onJoin={() => handleSwitchTeam(2)}
                 />
-
             </div>
 
             {/* Footer Actions */}
-            <div className="w-full max-w-4xl flex gap-4 sticky bottom-4 z-10">
+            <div className="w-full max-w-4xl flex gap-4 sticky bottom-4 z-20 animate-fade-in">
                 <button
                     onClick={handleLeaveRoom}
-                    className="flex-1 py-4 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl shadow-lg transition active:scale-95"
+                    className="flex-1 py-4 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold rounded-xl shadow-2xl transition-all transform hover:scale-105 active:scale-95"
                 >
                     🚪 Rời Phòng
                 </button>
@@ -202,16 +200,17 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                 {isHost ? (
                     <button
                         onClick={handleStartGame}
-                        className={`flex-[2] py-4 text-white text-xl font-bold rounded-xl shadow-lg transition transform 
+                        className={`flex-[2] py-5 text-white text-xl font-bold rounded-xl shadow-2xl transition-all transform 
                             ${(team1Players.length > 0 && team2Players.length > 0)
-                                ? 'bg-green-500 hover:bg-green-600 hover:-translate-y-1'
-                                : 'bg-green-300 cursor-not-allowed'
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105 animate-pulse-glow'
+                                : 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed opacity-60'
                             }`}
+                        disabled={!(team1Players.length > 0 && team2Players.length > 0)}
                     >
                         🚀 BẮT ĐẦU TRẬN ĐẤU
                     </button>
                 ) : (
-                    <div className="flex-[2] py-4 bg-gray-700 text-gray-400 text-xl font-bold rounded-xl shadow-lg text-center flex items-center justify-center gap-2">
+                    <div className="flex-[2] py-5 bg-gradient-to-r from-gray-700 to-gray-800 text-gray-300 text-xl font-bold rounded-xl shadow-2xl text-center flex items-center justify-center gap-2 border-2 border-gray-600">
                         <span className="animate-pulse">⏳</span> Đợi chủ phòng...
                     </div>
                 )}

@@ -58,42 +58,52 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in border-2 border-white/30">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-2xl">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-bold">Tạo Phòng Mới</h2>
+                <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-6 rounded-t-3xl relative overflow-hidden animate-gradient">
+                    <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                    <div className="flex justify-between items-center relative z-10">
+                        <div>
+                            <h2 className="text-3xl font-bold flex items-center gap-2">
+                                ✨ Tạo Phòng Mới
+                            </h2>
+                            <p className="text-blue-100 mt-2 flex items-center gap-2">
+                                <span className="font-semibold">Điểm của bạn:</span>
+                                <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full font-bold shadow-lg">
+                                    🪙 {userPoints || 0}
+                                </span>
+                            </p>
+                        </div>
                         <button
                             onClick={onClose}
-                            className="text-white hover:text-gray-200 text-3xl font-bold leading-none"
+                            className="text-white hover:text-red-300 text-4xl font-bold leading-none bg-white/20 hover:bg-white/30 rounded-full w-12 h-12 flex items-center justify-center transition-all transform hover:scale-110 active:scale-95"
                         >
                             ×
                         </button>
                     </div>
-                    <p className="text-blue-100 mt-2">Điểm của bạn: <span className="font-bold text-yellow-300">{userPoints || 0}</span></p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* Room Name */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">
-                            Tên Phòng *
+                    <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                            🏷️ Tên Phòng *
                         </label>
                         <input
                             type="text"
                             value={roomName}
                             onChange={(e) => setRoomName(e.target.value)}
                             placeholder="Nhập tên phòng..."
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all hover:border-gray-400"
                             required
                         />
                     </div>
 
                     {/* Game Mode Selection */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-3">
-                            Chế Độ Chơi *
+                    <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                        <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                            🎮 Chế Độ Chơi *
                         </label>
                         <div className="grid grid-cols-2 gap-3">
                             {GAME_MODES.map((mode) => (
@@ -106,12 +116,12 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                                             setMaxPlayers(mode.maxPlayers);
                                         }
                                     }}
-                                    className={`p-4 rounded-lg border-2 text-left transition-all ${selectedMode.id === mode.id
-                                            ? 'border-blue-500 bg-blue-50 shadow-md'
-                                            : 'border-gray-300 hover:border-blue-300'
+                                    className={`p-4 rounded-xl border-2 text-left transition-all transform hover:scale-105 ${selectedMode.id === mode.id
+                                            ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg ring-2 ring-blue-300'
+                                            : 'border-gray-300 hover:border-blue-400 hover:shadow-md'
                                         }`}
                                 >
-                                    <div className="font-bold text-lg">{mode.name}</div>
+                                    <div className="font-bold text-lg text-gray-800">{mode.name}</div>
                                     <div className="text-sm text-gray-600 mt-1">{mode.description}</div>
                                 </button>
                             ))}
@@ -119,9 +129,9 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                     </div>
 
                     {/* Max Players */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-3">
-                            Số Người Chơi Tối Đa *
+                    <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                        <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                            👥 Số Người Chơi Tối Đa *
                         </label>
                         <div className="grid grid-cols-4 gap-2">
                             {PLAYER_OPTIONS.filter(opt => opt.value <= selectedMode.maxPlayers).map((option) => (
@@ -129,9 +139,9 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                                     key={option.value}
                                     type="button"
                                     onClick={() => setMaxPlayers(option.value)}
-                                    className={`py-3 px-4 rounded-lg border-2 font-semibold transition-all ${maxPlayers === option.value
-                                            ? 'border-blue-500 bg-blue-500 text-white shadow-md'
-                                            : 'border-gray-300 hover:border-blue-300'
+                                    className={`py-3 px-4 rounded-xl border-2 font-bold transition-all transform hover:scale-110 ${maxPlayers === option.value
+                                            ? 'border-blue-500 bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg'
+                                            : 'border-gray-300 hover:border-blue-400 bg-white'
                                         }`}
                                 >
                                     {option.label}
@@ -141,9 +151,9 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                     </div>
 
                     {/* Betting Points */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-3">
-                            Điểm Cược (Winner takes all)
+                    <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                        <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                            💰 Điểm Cược (Winner takes all)
                         </label>
                         <div className="grid grid-cols-3 gap-2">
                             {BETTING_POINTS.map((option) => {
@@ -154,11 +164,11 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                                         type="button"
                                         onClick={() => canAfford && setBettingPoints(option.value)}
                                         disabled={!canAfford}
-                                        className={`py-3 px-4 rounded-lg font-semibold transition-all ${bettingPoints === option.value
-                                                ? `${option.color} text-white shadow-md border-2 border-transparent`
+                                        className={`py-3 px-4 rounded-xl font-bold transition-all transform ${bettingPoints === option.value
+                                                ? `${option.color} text-white shadow-lg border-2 border-white scale-105`
                                                 : canAfford
-                                                    ? 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-300'
-                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200'
+                                                    ? 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-300 hover:scale-105'
+                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200 opacity-50'
                                             }`}
                                     >
                                         {option.label}
@@ -167,27 +177,27 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                             })}
                         </div>
                         {bettingPoints > 0 && (
-                            <p className="text-sm text-orange-600 mt-2 font-semibold">
+                            <p className="text-sm bg-orange-50 border-2 border-orange-300 text-orange-700 p-3 rounded-xl mt-3 font-semibold flex items-center gap-2 animate-pulse">
                                 ⚠️ Tất cả người chơi phải đặt cược {bettingPoints} điểm để tham gia
                             </p>
                         )}
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-3 pt-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                            className="flex-1 px-6 py-4 border-2 border-gray-300 rounded-xl font-bold hover:bg-gray-100 transition-all transform hover:scale-105 active:scale-95 shadow-md"
                         >
-                            Hủy
+                            ❌ Hủy
                         </button>
                         <button
                             type="submit"
                             disabled={!roomName.trim() || bettingPoints > userPoints}
-                            className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-lg"
+                            className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-xl transform hover:scale-105 active:scale-95 text-lg"
                         >
-                            Tạo Phòng
+                            ✨ Tạo Phòng
                         </button>
                     </div>
                 </form>

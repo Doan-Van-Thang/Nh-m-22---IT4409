@@ -13,10 +13,10 @@ export function Toast({ message, type = 'info', onClose, duration = 3000 }) {
     }, [duration, onClose]);
 
     const typeStyles = {
-        success: 'bg-green-500 border-green-600',
-        error: 'bg-red-500 border-red-600',
-        info: 'bg-blue-500 border-blue-600',
-        warning: 'bg-yellow-500 border-yellow-600'
+        success: 'bg-gradient-to-r from-green-500 to-emerald-600 border-green-400',
+        error: 'bg-gradient-to-r from-red-500 to-red-600 border-red-400',
+        info: 'bg-gradient-to-r from-blue-500 to-blue-600 border-blue-400',
+        warning: 'bg-gradient-to-r from-yellow-500 to-orange-500 border-yellow-400'
     };
 
     const icons = {
@@ -28,15 +28,18 @@ export function Toast({ message, type = 'info', onClose, duration = 3000 }) {
 
     return (
         <div
-            className={`${typeStyles[type]} text-white px-6 py-4 rounded-lg shadow-lg border-l-4 
-                        flex items-center gap-3 min-w-[300px] max-w-[500px] animate-slide-in`}
+            className={`${typeStyles[type]} text-white px-6 py-4 rounded-xl shadow-2xl border-l-4 
+                        flex items-center gap-3 min-w-[300px] max-w-[500px] animate-slide-in
+                        backdrop-blur-sm hover:scale-105 transition-transform duration-300`}
             role="alert"
         >
-            <span className="text-2xl font-bold">{icons[type]}</span>
-            <span className="flex-1 text-sm font-medium">{message}</span>
+            <div className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-full">
+                <span className="text-xl font-bold">{icons[type]}</span>
+            </div>
+            <span className="flex-1 text-sm font-semibold">{message}</span>
             <button
                 onClick={onClose}
-                className="text-white hover:text-gray-200 text-xl font-bold leading-none"
+                className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold leading-none transition-all transform hover:scale-110 active:scale-95"
                 aria-label="Close notification"
             >
                 ×
@@ -51,7 +54,7 @@ export function Toast({ message, type = 'info', onClose, duration = 3000 }) {
  */
 export function ToastContainer({ toasts, removeToast }) {
     return (
-        <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2">
+        <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3">
             {toasts.map((toast) => (
                 <Toast
                     key={toast.id}

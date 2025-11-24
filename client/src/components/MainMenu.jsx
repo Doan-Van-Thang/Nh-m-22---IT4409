@@ -31,32 +31,35 @@ const LogoutIcon = () => (
 // [SỬA] Nhận props `auth` và `onLogout`
 const UserProfile = ({ auth, onLogout }) => {
     return (
-        <div className="flex items-center space-x-4 p-4">
-            {/* [SỬA ĐỔI] Dùng auth.avatarUrl, nếu không có thì dùng /avatar.png */}
-            <img
-                src={auth?.avatarUrl || '/avatar.png'}
-                alt="Avatar"
-                className="w-10 h-10 rounded-full bg-gray-300" // Thêm bg-gray-300
-            />
+        <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-white to-gray-50 rounded-xl shadow-md animate-fade-in-down">
+            {/* [ENHANCED] Avatar with glow effect */}
+            <div className="relative">
+                <img
+                    src={auth?.avatarUrl || '/avatar.png'}
+                    alt="Avatar"
+                    className="w-12 h-12 rounded-full bg-gray-300 ring-2 ring-blue-400 shadow-lg hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+            </div>
             <div>
-                {/* [SỬA] Hiển thị tên người dùng từ auth */}
-                <div className="font-semibold text-lg">{auth?.name || 'Guest'}</div>
-                <div className="flex items-center text-sm text-gray-600">
-                    {/* [SỬA] Hiển thị điểm số từ auth */}
-                    {auth?.highScore || 0}
+                {/* [ENHANCED] Username with gradient */}
+                <div className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{auth?.name || 'Guest'}</div>
+                <div className="flex items-center text-sm">
+                    {/* [ENHANCED] Points with styling */}
+                    <span className="font-semibold text-yellow-600">{auth?.highScore || 0}</span>
                     <span className="ml-1"><CoinIcon /></span>
                 </div>
             </div>
-            <button className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100">
+            <button className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-blue-50 transition-all duration-300 transform hover:scale-110">
                 <BellIcon />
             </button>
-            <button className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100">
+            <button className="text-gray-500 hover:text-purple-600 p-2 rounded-full hover:bg-purple-50 transition-all duration-300 transform hover:scale-110">
                 <SettingsIcon />
             </button>
-            {/* [THÊM MỚI] Nút Đăng xuất */}
+            {/* [ENHANCED] Logout button */}
             <button
                 onClick={onLogout}
-                className="text-gray-500 hover:text-red-600 p-2 rounded-full hover:bg-gray-100"
+                className="text-gray-500 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-all duration-300 transform hover:scale-110"
                 title="Đăng xuất"
             >
                 <LogoutIcon />
@@ -131,53 +134,65 @@ const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth, onOpenCreateModal 
 
     return (
         <div className="p-6">
-            <h1 className="text-3xl font-bold mb-6">Chọn phòng (Lobby)</h1>
+            <div className="flex items-center mb-6 animate-fade-in-down">
+                <span className="text-4xl mr-3">🎯</span>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Sảnh Chờ</h1>
+            </div>
 
-            {/* === [THÊM MỚI] NÚT TẠO PHÒNG === */}
+            {/* === [ENHANCED] CREATE ROOM BUTTON === */}
             <button
                 onClick={onOpenCreateModal}
-                className="w-full py-4 mb-8 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl shadow-lg transition-all text-xl"
+                className="w-full py-5 mb-8 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 text-white font-bold rounded-2xl shadow-2xl transition-all text-xl transform hover:scale-105 active:scale-95 animate-gradient hover-glow"
             >
-                + Tạo phòng mới
+                <span className="text-2xl mr-2">✨</span>
+                Tạo phòng mới
             </button>
-            {/* === KẾT THÚC NÚT MỚI === */}
-
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {roomList.length === 0 && <p className="text-gray-500 text-center col-span-3">Không có phòng nào.</p>}
-                {roomList.map((room) => (
+                {roomList.length === 0 && (
+                    <div className="col-span-3 text-center py-12">
+                        <span className="text-6xl mb-4 block">🎮</span>
+                        <p className="text-gray-500 text-lg">Chưa có phòng nào. Hãy tạo phòng đầu tiên!</p>
+                    </div>
+                )}
+                {roomList.map((room, index) => (
                     <div
                         key={room.id}
-                        className="bg-white p-5 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-2 border-gray-200"
+                        className="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all border-2 border-gray-200 hover:border-blue-300 hover-lift animate-fade-in-up"
+                        style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                        <div className="flex justify-between items-start mb-3">
-                            <h3 className="text-xl font-bold text-gray-800 flex-1">{room.name}</h3>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-bold text-gray-800 flex-1 line-clamp-2">{room.name}</h3>
                             {room.bettingPoints > 0 && (
-                                <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                <span className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1 shadow-lg animate-pulse-glow">
                                     <CoinIcon />
                                     {room.bettingPoints}
                                 </span>
                             )}
                         </div>
-                        <div className="space-y-2 mb-4">
-                            <p className="text-sm text-gray-600">
-                                <span className="font-semibold">Chế độ:</span> {getGameModeLabel(room.gameMode)}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                <span className="font-semibold">Người chơi:</span> {room.playerCount}/{room.maxPlayers}
-                            </p>
+                        <div className="space-y-3 mb-4">
+                            <div className="flex items-center bg-blue-50 p-2 rounded-lg">
+                                <span className="text-blue-600 mr-2">🎮</span>
+                                <span className="text-sm font-semibold text-blue-800">{getGameModeLabel(room.gameMode)}</span>
+                            </div>
+                            <div className="flex items-center bg-purple-50 p-2 rounded-lg">
+                                <span className="text-purple-600 mr-2">👥</span>
+                                <span className="text-sm font-semibold text-purple-800">{room.playerCount}/{room.maxPlayers} người chơi</span>
+                            </div>
                             {room.status && (
-                                <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${room.status === 'waiting' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold shadow-md ${room.status === 'waiting'
+                                        ? 'bg-gradient-to-r from-green-400 to-green-600 text-white animate-pulse'
+                                        : 'bg-gradient-to-r from-red-400 to-red-600 text-white'
                                     }`}>
-                                    {room.status === 'waiting' ? 'Đang chờ' : 'Đang chơi'}
+                                    {room.status === 'waiting' ? '⏳ Đang chờ' : '🎯 Đang chơi'}
                                 </span>
                             )}
                         </div>
                         <button
                             onClick={() => onJoinRoom(room.id)}
                             disabled={room.status === 'in-game' || room.playerCount >= room.maxPlayers}
-                            className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors">
-                            {room.status === 'in-game' ? 'Đang chơi' : room.playerCount >= room.maxPlayers ? 'Đã đầy' : 'Vào phòng'}
+                            className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95">
+                            {room.status === 'in-game' ? '🔒 Đang chơi' : room.playerCount >= room.maxPlayers ? '🚫 Đã đầy' : '🚀 Vào phòng'}
                         </button>
                     </div>
                 ))}
@@ -212,7 +227,11 @@ export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onL
     }, [socket]); // Chỉ chạy khi 'socket' prop thay đổi (thường là 1 lần)
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-gradient-to-br from-gray-100 via-blue-50 to-purple-50 relative overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+
             <CreateRoomModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
@@ -221,13 +240,13 @@ export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onL
             />
 
             {/* === CỘT 1: SIDEBAR === */}
-            <aside className="w-1/4 h-screen p-4 overflow-y-auto">
+            <aside className="w-1/4 h-screen p-4 overflow-y-auto relative z-10">
                 {/* [SỬA] Truyền 'leaderboard' xuống component con */}
                 <Leaderboard leaderboard={leaderboard} />
             </aside>
 
             {/* === CỘT 2: NỘI DUNG CHÍNH === */}
-            <main className="flex-1 h-screen flex flex-col">
+            <main className="flex-1 h-screen flex flex-col relative z-10">
                 <header className="flex justify-end w-full">
                     <UserProfile auth={auth} onLogout={onLogout} />
                 </header>
