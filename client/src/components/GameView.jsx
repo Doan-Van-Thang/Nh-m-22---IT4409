@@ -8,6 +8,10 @@ import MiniMap from './MiniMap.jsx';
 function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSetup, toast }) {
     const canvasRef = useRef(null);
     const gameInstanceRef = useRef(null);
+    const [countdown, setCountdown] = useState(3);
+    const [gameStarted, setGameStarted] = useState(false);
+    const [gameOver, setGameOver] = useState(false);
+    const [winner, setWinner] = useState(null);
     const [gameStats, setGameStats] = useState({
         kills: 0,
         deaths: 0,
@@ -16,6 +20,33 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         ammo: 10,
         teamScore: { team1: 0, team2: 0 }
     });
+
+    // Countdown timer before match starts
+    useEffect(() => {
+        if (countdown > 0) {
+            const timer = setTimeout(() => {
+                setCountdown(countdown - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+        } else if (countdown === 0 && !gameStarted) {
+            setGameStarted(true);
+            toast.success('Fight! 🎮');
+        }
+    }, [countdown, gameStarted, toast]);
+
+    // Listen for game over event
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleGameOver = (data) => {
+            if (data.type === 'gameOver') {
+                setGameOver(true);
+                setWinner(data.winner);
+            }
+        };
+
+        socket.addMessageListener(handleGameOver);
+    }, [socket]);
 
     // Update stats from game instance (throttled to 200ms for performance)
     useEffect(() => {
@@ -88,6 +119,46 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
     return (
         <div className="relative w-screen h-screen overflow-hidden bg-black">
             <canvas id="gameCanvas" ref={canvasRef} className="absolute inset-0" />
+
+            {/* Countdown Overlay */}
+            {countdown > 0 && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 animate-fade-in">
+                    <div className="text-center animate-scale-in">
+                        <div className="text-8xl font-black text-white mb-4 animate-bounce" style={{ textShadow: '0 0 30px rgba(255,255,255,0.8), 0 0 60px rgba(59,130,246,0.6)' }}>
+                            {countdown}
+                        </div>
+                        <div className="text-3xl font-bold text-blue-400 animate-pulse">
+                            Get Ready!
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Game Over Overlay */}
+            {gameOver && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-md z-50 animate-fade-in">
+                    <div className="text-center p-8 bg-gradient-to-br from-gray-900 to-black rounded-3xl border-4 border-yellow-500 shadow-2xl animate-scale-in">
+                        <div className="text-6xl mb-4">🏆</div>
+                        <div className="text-5xl font-black text-yellow-400 mb-4" style={{ textShadow: '0 0 20px rgba(251,191,36,0.8)' }}>
+                            VICTORY!
+                        </div>
+                        {winner && (
+                            <div className="text-2xl text-white mb-6">
+                                {winner.type === 'team' ? (
+                                    <span className={winner.teamId === 1 ? 'text-red-400' : 'text-blue-400'}>
+                                        Team {winner.teamId === 1 ? 'RED' : 'BLUE'} Wins!
+                                    </span>
+                                ) : (
+                                    <span className="text-green-400">Player {winner.playerId} Wins!</span>
+                                )}
+                            </div>
+                        )}
+                        <div className="text-gray-400 text-sm animate-pulse">
+                            Returning to lobby in 5 seconds...
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* HUD Overlay */}
             <div className="absolute inset-0 pointer-events-none">

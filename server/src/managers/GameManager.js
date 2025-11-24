@@ -34,16 +34,23 @@ export default class GameManager {
         }
 
         this.activeGames.set(room.id, gameEngine);
-        gameEngine.start(); // Bắt đầu vòng lặp game
 
-        // Thông báo cho tất cả người chơi trong phòng là game đã bắt đầu
-        // (Tin này giờ chỉ dùng để client chuyển màn hình)
+        // Send initial game started message (countdown begins on client)
         this.networkManager.broadcastToRoom(room.id, {
             type: 'gameStarted',
-            mapData: mapData, // Gửi kèm mapData (để client ở Bước 1 bắt được)
+            mapData: mapData,
             gameMode: room.gameMode,
             modeConfig: room.modeConfig
         });
+
+        // Start game loop after 3 second countdown
+        setTimeout(() => {
+            gameEngine.start();
+            this.networkManager.broadcastToRoom(room.id, {
+                type: 'matchStart',
+                message: 'Fight!'
+            });
+        }, 3000);
     }
 
     // Xóa game khi kết thúc

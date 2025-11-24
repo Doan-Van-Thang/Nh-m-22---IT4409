@@ -295,7 +295,9 @@ export default class NetworkManager {
         });
     }
     // Gửi sự kiện kết thúc game
-    async broadcastEndGame(roomId, winningTeamId) {
+    // Broadcast game over is now handled by GameEngine using broadcastToRoom
+    // Keeping this for backwards compatibility
+    async broadcastEndGame(roomId, winnerInfo) {
         const room = this.roomManager.rooms.get(roomId);
 
         // Distribute betting points to winners

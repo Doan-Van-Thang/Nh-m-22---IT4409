@@ -278,11 +278,19 @@ export default class GameEngine {
         }
 
         if (this.networkManager) {
-            this.networkManager.broadcastEndGame(this.roomId, winnerInfo);
+            // Send game over with winner info and delay
+            this.networkManager.broadcastToRoom(this.roomId, {
+                type: 'gameOver',
+                winner: winnerInfo,
+                reason: reason
+            });
         }
 
+        // Clean up after 5 seconds
         setTimeout(() => {
-            this.networkManager.gameManager.endGame(this.roomId);
+            if (this.networkManager && this.networkManager.gameManager) {
+                this.networkManager.gameManager.endGame(this.roomId);
+            }
         }, 5000);
     }
 

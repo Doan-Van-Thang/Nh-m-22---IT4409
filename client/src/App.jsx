@@ -95,11 +95,21 @@ function AppContent() {
                     break;
 
                 case 'gameOver':
-                    // Handle game over - update room if provided
-                    if (data.room) {
-                        setCurrentRoom(data.room);
-                        // Screen transition will be handled by Game.js navigation
+                    // Handle game over - show winner info, then transition
+                    if (data.winner) {
+                        const winnerText = data.winner.type === 'team'
+                            ? `Team ${data.winner.teamId === 1 ? 'RED' : 'BLUE'} wins!`
+                            : `Player wins!`;
+                        toast.success(`🏆 ${winnerText}`);
                     }
+
+                    // Wait for victory screen, then return to lobby
+                    setTimeout(() => {
+                        if (data.room) {
+                            setCurrentRoom(data.room);
+                        }
+                        setCurrentScreen(SCREENS.LOBBY);
+                    }, 5000);
                     break;
 
                 default:
