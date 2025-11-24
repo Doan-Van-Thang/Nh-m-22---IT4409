@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
+import { GAME_MODES, getGameModeInfo } from '../config/gameModes';
 
-const GAME_MODES = [
-    { id: '1V1', name: '1 vs 1', description: 'Đối đầu 1-1', maxPlayers: 2 },
-    { id: '2V2', name: '2 vs 2', description: 'Đội 2 người', maxPlayers: 4 },
-    { id: 'DEATHMATCH', name: 'Sinh tử chiến', description: 'Người có nhiều kill nhất thắng', maxPlayers: 4 },
-    { id: 'TEAM_DEATHMATCH', name: 'Đội sinh tử', description: 'Đội có nhiều kill nhất thắng', maxPlayers: 4 },
+const GAME_MODE_OPTIONS = [
+    { id: GAME_MODES.CLASSIC, minPlayers: 2, maxPlayers: 8 },
+    { id: GAME_MODES.DEATHMATCH, minPlayers: 2, maxPlayers: 8 },
+    { id: GAME_MODES.CAPTURE_FLAG, minPlayers: 4, maxPlayers: 8 },
+    { id: GAME_MODES.KING_OF_HILL, minPlayers: 4, maxPlayers: 8 },
+    { id: GAME_MODES.BATTLE_ROYALE, minPlayers: 4, maxPlayers: 10 },
 ];
 
-const PLAYER_OPTIONS = [
-    { value: 2, label: '2 người' },
-    { value: 4, label: '4 người' },
-    { value: 6, label: '6 người' },
-    { value: 8, label: '8 người' },
-];
+const PLAYER_OPTIONS = [2, 4, 6, 8, 10];
 
 const BETTING_POINTS = [
     { value: 0, label: 'Không cược', color: 'bg-gray-500' },
@@ -25,11 +22,14 @@ const BETTING_POINTS = [
 
 function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
     const [roomName, setRoomName] = useState('');
-    const [selectedMode, setSelectedMode] = useState(GAME_MODES[0]);
+    const [selectedMode, setSelectedMode] = useState(GAME_MODES.CLASSIC);
     const [maxPlayers, setMaxPlayers] = useState(4);
     const [bettingPoints, setBettingPoints] = useState(0);
 
     if (!isOpen) return null;
+
+    const selectedModeOption = GAME_MODE_OPTIONS.find(m => m.id === selectedMode) || GAME_MODE_OPTIONS[0];
+    const modeInfo = getGameModeInfo(selectedMode);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -44,14 +44,14 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
 
         onCreateRoom({
             name: roomName,
-            gameMode: selectedMode.id,
+            gameMode: selectedMode,
             maxPlayers: maxPlayers,
             bettingPoints: bettingPoints
         });
 
         // Reset form
         setRoomName('');
-        setSelectedMode(GAME_MODES[0]);
+        setSelectedMode(GAME_MODES.CLASSIC);
         setMaxPlayers(4);
         setBettingPoints(0);
         onClose();
@@ -105,26 +105,40 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                         <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                             🎮 Chế Độ Chơi *
                         </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {GAME_MODES.map((mode) => (
-                                <button
-                                    key={mode.id}
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedMode(mode);
-                                        if (maxPlayers > mode.maxPlayers) {
-                                            setMaxPlayers(mode.maxPlayers);
-                                        }
-                                    }}
-                                    className={`p-4 rounded-xl border-2 text-left transition-all transform hover:scale-105 ${selectedMode.id === mode.id
+                        <div className="grid grid-cols-1 gap-3">
+                            {GAME_MODE_OPTIONS.map((mode) => {
+                                const info = getGameModeInfo(mode.id);
+                                return (
+                                    <button
+                                        key={mode.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedMode(mode.id);
+                                            // Adjust maxPlayers if out of range
+                                            if (maxPlayers < mode.minPlayers) {
+                                                setMaxPlayers(mode.minPlayers);
+                                            } else if (maxPlayers > mode.maxPlayers) {
+                                                setMaxPlayers(mode.maxPlayers);
+                                            }
+                                        }}
+                                        className={`p-4 rounded-xl border-2 text-left transition-all transform hover:scale-102 ${selectedMode === mode.id
                                             ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg ring-2 ring-blue-300'
                                             : 'border-gray-300 hover:border-blue-400 hover:shadow-md'
-                                        }`}
-                                >
-                                    <div className="font-bold text-lg text-gray-800">{mode.name}</div>
-                                    <div className="text-sm text-gray-600 mt-1">{mode.description}</div>
-                                </button>
-                            ))}
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-3xl">{info.icon}</span>
+                                            <div className="flex-1">
+                                                <div className="font-bold text-lg text-gray-800">{info.name}</div>
+                                                <div className="text-sm text-gray-600 mt-1">{info.description}</div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    {info.teams ? '👥 Teams' : '⚔️ FFA'} • {info.players} players
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -133,18 +147,18 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                         <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                             👥 Số Người Chơi Tối Đa *
                         </label>
-                        <div className="grid grid-cols-4 gap-2">
-                            {PLAYER_OPTIONS.filter(opt => opt.value <= selectedMode.maxPlayers).map((option) => (
+                        <div className="grid grid-cols-5 gap-2">
+                            {PLAYER_OPTIONS.filter(opt => opt >= selectedModeOption.minPlayers && opt <= selectedModeOption.maxPlayers).map((option) => (
                                 <button
-                                    key={option.value}
+                                    key={option}
                                     type="button"
-                                    onClick={() => setMaxPlayers(option.value)}
-                                    className={`py-3 px-4 rounded-xl border-2 font-bold transition-all transform hover:scale-110 ${maxPlayers === option.value
-                                            ? 'border-blue-500 bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg'
-                                            : 'border-gray-300 hover:border-blue-400 bg-white'
+                                    onClick={() => setMaxPlayers(option)}
+                                    className={`py-3 px-4 rounded-xl border-2 font-bold transition-all transform hover:scale-110 ${maxPlayers === option
+                                        ? 'border-blue-500 bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg'
+                                        : 'border-gray-300 hover:border-blue-400 bg-white'
                                         }`}
                                 >
-                                    {option.label}
+                                    {option}
                                 </button>
                             ))}
                         </div>
@@ -165,10 +179,10 @@ function CreateRoomModal({ isOpen, onClose, onCreateRoom, userPoints }) {
                                         onClick={() => canAfford && setBettingPoints(option.value)}
                                         disabled={!canAfford}
                                         className={`py-3 px-4 rounded-xl font-bold transition-all transform ${bettingPoints === option.value
-                                                ? `${option.color} text-white shadow-lg border-2 border-white scale-105`
-                                                : canAfford
-                                                    ? 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-300 hover:scale-105'
-                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200 opacity-50'
+                                            ? `${option.color} text-white shadow-lg border-2 border-white scale-105`
+                                            : canAfford
+                                                ? 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-300 hover:scale-105'
+                                                : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200 opacity-50'
                                             }`}
                                     >
                                         {option.label}

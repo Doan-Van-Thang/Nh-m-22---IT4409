@@ -1,6 +1,7 @@
 // File: client/src/components/MainMenu.jsx
 import React, { useEffect, useState } from 'react'; // [SỬA] Import thêm useEffect và useState
 import CreateRoomModal from './CreateRoomModal.jsx';
+import { getGameModeInfo } from '../config/gameModes';
 // === CÁC ICON (Sử dụng SVG placeholder, bạn có thể thay bằng thư viện icon) ===
 const BellIcon = () => (
     <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,16 +123,6 @@ const Leaderboard = ({ leaderboard }) => {
 // ===== 3. COMPONENT NỘI DUNG CHÍNH (DANH SÁCH PHÒNG) (ĐÃ CẬP NHẬT) =====
 // [SỬA] Nhận prop `onPlay`
 const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth, onOpenCreateModal }) => {
-    const getGameModeLabel = (mode) => {
-        const modes = {
-            '1V1': '1 vs 1',
-            '2V2': '2 vs 2',
-            'DEATHMATCH': 'Sinh tử chiến',
-            'TEAM_DEATHMATCH': 'Đội sinh tử'
-        };
-        return modes[mode] || mode;
-    };
-
     return (
         <div className="p-6">
             <div className="flex items-center mb-6 animate-fade-in-down">
@@ -172,8 +163,8 @@ const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth, onOpenCreateModal 
                         </div>
                         <div className="space-y-3 mb-4">
                             <div className="flex items-center bg-blue-50 p-2 rounded-lg">
-                                <span className="text-blue-600 mr-2">🎮</span>
-                                <span className="text-sm font-semibold text-blue-800">{getGameModeLabel(room.gameMode)}</span>
+                                <span className="text-blue-600 mr-2">{getGameModeInfo(room.gameMode).icon}</span>
+                                <span className="text-sm font-semibold text-blue-800">{getGameModeInfo(room.gameMode).name}</span>
                             </div>
                             <div className="flex items-center bg-purple-50 p-2 rounded-lg">
                                 <span className="text-purple-600 mr-2">👥</span>
@@ -181,8 +172,8 @@ const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth, onOpenCreateModal 
                             </div>
                             {room.status && (
                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-bold shadow-md ${room.status === 'waiting'
-                                        ? 'bg-gradient-to-r from-green-400 to-green-600 text-white animate-pulse'
-                                        : 'bg-gradient-to-r from-red-400 to-red-600 text-white'
+                                    ? 'bg-gradient-to-r from-green-400 to-green-600 text-white animate-pulse'
+                                    : 'bg-gradient-to-r from-red-400 to-red-600 text-white'
                                     }`}>
                                     {room.status === 'waiting' ? '⏳ Đang chờ' : '🎯 Đang chơi'}
                                 </span>

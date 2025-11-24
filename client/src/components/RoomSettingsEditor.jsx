@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
+import { GAME_MODES, getGameModeInfo } from '../config/gameModes';
 
-const GAME_MODES = [
-    { id: '1V1', name: '1 vs 1', maxPlayers: 2 },
-    { id: '2V2', name: '2 vs 2', maxPlayers: 4 },
-    { id: 'DEATHMATCH', name: 'Sinh tử chiến', maxPlayers: 4 },
-    { id: 'TEAM_DEATHMATCH', name: 'Đội sinh tử', maxPlayers: 4 },
+const GAME_MODE_OPTIONS = [
+    { id: GAME_MODES.CLASSIC, minPlayers: 2, maxPlayers: 8 },
+    { id: GAME_MODES.DEATHMATCH, minPlayers: 2, maxPlayers: 8 },
+    { id: GAME_MODES.CAPTURE_FLAG, minPlayers: 4, maxPlayers: 8 },
+    { id: GAME_MODES.KING_OF_HILL, minPlayers: 4, maxPlayers: 8 },
+    { id: GAME_MODES.BATTLE_ROYALE, minPlayers: 4, maxPlayers: 10 },
 ];
 
-const PLAYER_OPTIONS = [2, 4, 6, 8];
+const PLAYER_OPTIONS = [2, 4, 6, 8, 10];
 
 const BETTING_OPTIONS = [0, 10, 50, 100, 500, 1000];
 
 function RoomSettingsEditor({ room, isOpen, onClose, onUpdateSettings, userPoints }) {
-    const [gameMode, setGameMode] = useState(room.gameMode || '2V2');
+    const [gameMode, setGameMode] = useState(room.gameMode || GAME_MODES.CLASSIC);
     const [maxPlayers, setMaxPlayers] = useState(room.maxPlayers || 4);
     const [bettingPoints, setBettingPoints] = useState(room.bettingPoints || 0);
 
     if (!isOpen) return null;
 
-    const selectedMode = GAME_MODES.find(m => m.id === gameMode) || GAME_MODES[1];
+    const selectedModeOption = GAME_MODE_OPTIONS.find(m => m.id === gameMode) || GAME_MODE_OPTIONS[0];
+    const modeInfo = getGameModeInfo(gameMode);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -65,25 +68,40 @@ function RoomSettingsEditor({ room, isOpen, onClose, onUpdateSettings, userPoint
                         <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                             🎮 Chế Độ Chơi
                         </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {GAME_MODES.map((mode) => (
-                                <button
-                                    key={mode.id}
-                                    type="button"
-                                    onClick={() => {
-                                        setGameMode(mode.id);
-                                        if (maxPlayers > mode.maxPlayers) {
-                                            setMaxPlayers(mode.maxPlayers);
-                                        }
-                                    }}
-                                    className={`p-4 rounded-xl border-2 text-sm font-bold transition-all transform hover:scale-105 ${gameMode === mode.id
+                        <div className="grid grid-cols-1 gap-3">
+                            {GAME_MODE_OPTIONS.map((mode) => {
+                                const info = getGameModeInfo(mode.id);
+                                return (
+                                    <button
+                                        key={mode.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setGameMode(mode.id);
+                                            // Adjust maxPlayers if current value is out of range
+                                            if (maxPlayers < mode.minPlayers) {
+                                                setMaxPlayers(mode.minPlayers);
+                                            } else if (maxPlayers > mode.maxPlayers) {
+                                                setMaxPlayers(mode.maxPlayers);
+                                            }
+                                        }}
+                                        className={`p-4 rounded-xl border-2 text-left font-bold transition-all transform hover:scale-102 ${gameMode === mode.id
                                             ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg ring-2 ring-blue-300'
                                             : 'border-gray-300 hover:border-blue-400 hover:shadow-md bg-white'
-                                        }`}
-                                >
-                                    {mode.name}
-                                </button>
-                            ))}
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-3xl">{info.icon}</span>
+                                            <div className="flex-1">
+                                                <div className="font-bold text-lg">{info.name}</div>
+                                                <div className="text-sm text-gray-600 font-normal">{info.description}</div>
+                                                <div className="text-xs text-gray-500 font-normal mt-1">
+                                                    {info.teams ? '👥 Teams' : '⚔️ FFA'} • {info.players} players
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -92,8 +110,8 @@ function RoomSettingsEditor({ room, isOpen, onClose, onUpdateSettings, userPoint
                         <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                             👥 Số Người Tối Đa
                         </label>
-                        <div className="grid grid-cols-4 gap-2">
-                            {PLAYER_OPTIONS.filter(opt => opt <= selectedMode.maxPlayers).map((option) => {
+                        <div className="grid grid-cols-5 gap-2">
+                            {PLAYER_OPTIONS.filter(opt => opt >= selectedModeOption.minPlayers && opt <= selectedModeOption.maxPlayers).map((option) => {
                                 const canSelect = option >= room.players.length;
                                 return (
                                     <button
@@ -102,10 +120,10 @@ function RoomSettingsEditor({ room, isOpen, onClose, onUpdateSettings, userPoint
                                         onClick={() => canSelect && setMaxPlayers(option)}
                                         disabled={!canSelect}
                                         className={`py-3 px-4 rounded-xl border-2 font-bold transition-all transform hover:scale-110 ${maxPlayers === option
-                                                ? 'border-blue-500 bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg'
-                                                : canSelect
-                                                    ? 'border-gray-300 hover:border-blue-400 bg-white'
-                                                    : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                                            ? 'border-blue-500 bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg'
+                                            : canSelect
+                                                ? 'border-gray-300 hover:border-blue-400 bg-white'
+                                                : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
                                             }`}
                                     >
                                         {option}
@@ -135,10 +153,10 @@ function RoomSettingsEditor({ room, isOpen, onClose, onUpdateSettings, userPoint
                                         onClick={() => canAfford && setBettingPoints(option)}
                                         disabled={!canAfford}
                                         className={`py-3 px-4 rounded-xl font-bold transition-all transform ${bettingPoints === option
-                                                ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg border-2 border-white scale-105'
-                                                : canAfford
-                                                    ? 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-300 hover:scale-105'
-                                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200 opacity-50'
+                                            ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg border-2 border-white scale-105'
+                                            : canAfford
+                                                ? 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-300 hover:scale-105'
+                                                : 'bg-gray-100 text-gray-400 cursor-not-allowed border-2 border-gray-200 opacity-50'
                                             }`}
                                     >
                                         {option === 0 ? 'Không' : `${option}`}

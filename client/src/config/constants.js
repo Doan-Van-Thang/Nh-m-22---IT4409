@@ -18,9 +18,12 @@ export const STORAGE_KEYS = {
 };
 
 // WebSocket URL configuration
+// Auto-detect: Use localhost for local play, or current hostname for network play
 const WS_HOST = import.meta.env.VITE_WS_HOST || window.location.hostname;
 const WS_PORT = import.meta.env.VITE_WS_PORT || '5174';
 export const SOCKET_URL = `ws://${WS_HOST}:${WS_PORT}`;
+
+console.log(`[Config] WebSocket URL: ${SOCKET_URL}`);
 
 // Debug mode
 export const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true';

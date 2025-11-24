@@ -1,15 +1,17 @@
 // server/src/Room.js
 import { createId } from './model/utils.js';
+import { GAME_MODES, getGameModeConfig } from './config/gameModes.js';
 
 export default class Room {
-    constructor(hostPlayer, name, gameMode = '2V2', maxPlayers = 4, bettingPoints = 0) {
+    constructor(hostPlayer, name, gameMode = GAME_MODES.CLASSIC, maxPlayers = 4, bettingPoints = 0) {
         this.id = createId(); // Dùng hàm tạo ID của bạn
         this.name = name || `Phòng của ${hostPlayer.name}`;
         this.hostId = hostPlayer.id;
         this.players = new Map(); // Sẽ lưu { id, name, avatarUrl, teamId }
         this.status = "waiting"; // 'waiting' hoặc 'in-game'
         this.maxPlayers = maxPlayers; // Số người chơi tối đa
-        this.gameMode = gameMode; // Chế độ chơi (1V1, 2V2, DEATHMATCH, etc.)
+        this.gameMode = gameMode; // Game mode from GAME_MODES enum
+        this.modeConfig = getGameModeConfig(gameMode); // Store mode configuration
         this.bettingPoints = bettingPoints; // Điểm cược
         this.playersBet = new Map(); // Track who has paid the bet
 
@@ -26,11 +28,16 @@ export default class Room {
             throw new Error(`Bạn cần ít nhất ${this.bettingPoints} điểm để tham gia phòng này.`);
         }
 
-        // Gán đội cho người chơi, logic 1v1 hoặc 2v2...
-        // Ví dụ đơn giản: xen kẽ
-        const team1Count = this.countPlayersInTeam(1);
-        const team2Count = this.countPlayersInTeam(2);
-        const teamId = (team1Count <= team2Count) ? 1 : 2;
+        // Gán đội cho người chơi dựa trên game mode
+        let teamId = null;
+
+        if (this.modeConfig.teams) {
+            // Team-based modes: alternate between teams
+            const team1Count = this.countPlayersInTeam(1);
+            const team2Count = this.countPlayersInTeam(2);
+            teamId = (team1Count <= team2Count) ? 1 : 2;
+        }
+        // For FFA modes (deathmatch, battleRoyale), teamId remains null
 
         const playerInfo = {
             id: player.id,
@@ -90,6 +97,7 @@ export default class Room {
 
         if (gameMode) {
             this.gameMode = gameMode;
+            this.modeConfig = getGameModeConfig(gameMode); // Reload mode config
         }
 
         if (maxPlayers && maxPlayers >= this.players.size) {
@@ -168,6 +176,7 @@ export default class Room {
             status: this.status,
             maxPlayers: this.maxPlayers,
             gameMode: this.gameMode,
+            modeConfig: this.modeConfig, // Include mode configuration
             bettingPoints: this.bettingPoints,
             playerCount: this.players.size,
             players: Array.from(this.players.values()) // Gửi danh sách người chơi

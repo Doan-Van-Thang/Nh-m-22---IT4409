@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import PlayerCard from './PlayerCard';
 import RoomSettingsEditor from './RoomSettingsEditor';
+import { getGameModeInfo } from '../config/gameModes';
 
 // Component hiển thị cột cho từng đội 
 const TeamColumn = ({
@@ -147,14 +148,20 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                 </div>
 
                 {/* Room Settings Info */}
-                <div className="flex flex-wrap gap-3 pt-4 border-t-2 border-gray-200">\n                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 px-4 py-2 rounded-xl border-2 border-blue-200 shadow-sm">\n                        <span className="text-xs text-blue-600 font-bold block">Chế độ</span>
-                    <p className="text-sm font-bold text-blue-900 mt-1">{room.gameMode || '2V2'}</p>
-                </div>
-                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 px-4 py-2 rounded-xl border-2 border-purple-200 shadow-sm">\n                        <span className="text-xs text-purple-600 font-bold block">Người chơi</span>
+                <div className="flex flex-wrap gap-3 pt-4 border-t-2 border-gray-200">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 px-4 py-2 rounded-xl border-2 border-blue-200 shadow-sm">
+                        <span className="text-xs text-blue-600 font-bold block">Chế độ</span>
+                        <p className="text-sm font-bold text-blue-900 mt-1 flex items-center gap-1">
+                            {getGameModeInfo(room.gameMode).icon} {getGameModeInfo(room.gameMode).name}
+                        </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 px-4 py-2 rounded-xl border-2 border-purple-200 shadow-sm">
+                        <span className="text-xs text-purple-600 font-bold block">Người chơi</span>
                         <p className="text-sm font-bold text-purple-900 mt-1">{room.players.length}/{room.maxPlayers}</p>
                     </div>
                     {room.bettingPoints > 0 && (
-                        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 px-4 py-2 rounded-xl border-2 border-yellow-300 shadow-sm animate-pulse-glow">\n                            <span className="text-xs text-yellow-700 font-bold block">Điểm cược</span>
+                        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 px-4 py-2 rounded-xl border-2 border-yellow-300 shadow-sm animate-pulse-glow">
+                            <span className="text-xs text-yellow-700 font-bold block">Điểm cược</span>
                             <p className="text-sm font-bold text-yellow-900 flex items-center gap-1 mt-1">
                                 🪙 {room.bettingPoints}
                             </p>

@@ -8,9 +8,10 @@ export default class GameManager {
     }
 
     createGame(room) {
-        console.log(`[GameManager] Đang tạo game cho phòng ${room.id}...`);
-        const gameEngine = new GameEngine();
-        // ...
+        console.log(`[GameManager] Đang tạo game cho phòng ${room.id} with mode ${room.gameMode}...`);
+
+        // Create game engine with the room's game mode
+        const gameEngine = new GameEngine(room.gameMode);
         gameEngine.setNetworkManager(this.networkManager, room.id);
 
         // Lấy mapData ra trước
@@ -39,7 +40,9 @@ export default class GameManager {
         // (Tin này giờ chỉ dùng để client chuyển màn hình)
         this.networkManager.broadcastToRoom(room.id, {
             type: 'gameStarted',
-            mapData: mapData // Gửi kèm mapData (để client ở Bước 1 bắt được)
+            mapData: mapData, // Gửi kèm mapData (để client ở Bước 1 bắt được)
+            gameMode: room.gameMode,
+            modeConfig: room.modeConfig
         });
     }
 

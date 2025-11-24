@@ -46,7 +46,7 @@ async function startServer() {
         // 5. Start HTTP server on all network interfaces (0.0.0.0)
         server.listen(PORT, '0.0.0.0', () => {
             logger.info(`Server started successfully on http://0.0.0.0:${PORT}`);
-            logger.info(`Access from other devices using: http://192.168.0.103:${PORT}`);
+            logger.info(`WebSocket server ready - clients will auto-connect based on their URL`);
         });
 
     } catch (error) {
