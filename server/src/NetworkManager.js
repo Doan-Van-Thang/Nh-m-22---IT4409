@@ -38,9 +38,24 @@ export default class NetworkManager {
         if (player) {
             console.log(`[NetworkManager] Người chơi ${player.id} đã ngắt kết nối.`);
 
-            // THÊM MỚI: Rời khỏi phòng/game
-            this.roomManager.handleLeaveRoom(player.id);
-            // ... logic xóa khỏi game đang chơi nếu có ...
+            // Don't immediately remove from room - give 30 seconds to reconnect
+            // Mark as disconnected but keep in room
+            const roomId = this.roomManager.playerToRoom.get(player.id);
+            if (roomId) {
+                const room = this.roomManager.rooms.get(roomId);
+                if (room) {
+                    console.log(`[NetworkManager] Player ${player.id} disconnected from room ${roomId}, keeping room for reconnect...`);
+                    // Set a timeout to remove if they don't reconnect
+                    setTimeout(() => {
+                        // Check if player reconnected
+                        if (!Array.from(this.clients.values()).some(p => p.id === player.id)) {
+                            console.log(`[NetworkManager] Player ${player.id} did not reconnect, removing from room...`);
+                            this.roomManager.handleLeaveRoom(player.id);
+                            this.broadcastRoomList();
+                        }
+                    }, 30000); // 30 second grace period
+                }
+            }
 
             this.clients.delete(ws);
         } else {
@@ -185,7 +200,7 @@ export default class NetworkManager {
                     const loginData = await this.authManager.login(data.username, data.password);
                     // LƯU LẠI THÔNG TIN PLAYER KHI LOGIN
                     this.clients.set(ws, {
-                        id: loginData.id,
+                        id: loginData.id.toString ? loginData.id.toString() : loginData.id,
                         name: loginData.name,
                         avatarUrl: loginData.avatarUrl,
                         highScore: loginData.highScore
@@ -202,7 +217,7 @@ export default class NetworkManager {
 
                         // Lưu lại client khi xác thực thành công
                         this.clients.set(ws, {
-                            id: account._id,
+                            id: account._id.toString(), // Convert to string for consistency
                             name: account.name,
                             avatarUrl: account.avatarUrl,
                             highScore: account.highScore
@@ -212,7 +227,7 @@ export default class NetworkManager {
                             type: 'authSuccess',
                             token: data.token,
                             username: account.username,
-                            id: account._id,
+                            id: account._id.toString(), // Convert to string
                             highScore: account.highScore,
                             name: account.name, // Gửi thêm name
                             avatarUrl: account.avatarUrl // Gửi thêm avatarUrl
@@ -245,6 +260,49 @@ export default class NetworkManager {
                 case 'getRoomList':
                     const rooms = this.roomManager.getRoomList();
                     ws.send(JSON.stringify({ type: 'roomListData', rooms: rooms }));
+                    break;
+
+                case 'syncRoomState':
+                    // Handle room state sync request after page reload
+                    console.log('[NetworkManager] Received syncRoomState request:', data.roomId, 'from player:', player?.id);
+                    if (player && data.roomId) {
+                        const room = this.roomManager.rooms.get(data.roomId);
+                        console.log('[NetworkManager] Room found:', !!room, 'Player in room:', room?.players.has(player.id));
+                        if (room && room.players.has(player.id)) {
+                            // Player is still in the room
+                            const roomState = room.getState();
+                            const response = {
+                                type: 'roomStateSync',
+                                room: roomState,
+                                playerSetup: {
+                                    playerId: player.id,
+                                    teamId: room.players.get(player.id).teamId
+                                }
+                            };
+
+                            // If game is in progress, send map data and current game state
+                            if (room.status === 'in-game') {
+                                const game = this.gameManager.activeGames.get(data.roomId);
+                                console.log('[NetworkManager] Game found:', !!game);
+                                if (game) {
+                                    response.mapData = game.getMapData();
+                                    // Send current game state so player can see all tanks/bullets
+                                    response.gameState = game.getGameState();
+                                    console.log('[NetworkManager] Sending sync with', response.gameState.players.length, 'players');
+                                }
+                            }
+
+                            console.log('[NetworkManager] Sending roomStateSync response');
+                            ws.send(JSON.stringify(response));
+                        } else {
+                            // Room doesn't exist or player not in room
+                            console.log('[NetworkManager] Room not found or player not in room');
+                            ws.send(JSON.stringify({
+                                type: 'roomStateSync',
+                                room: null
+                            }));
+                        }
+                    }
                     break;
 
                 case 'createRoom':

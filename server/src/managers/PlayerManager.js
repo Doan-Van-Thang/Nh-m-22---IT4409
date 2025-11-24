@@ -105,4 +105,9 @@ export default class PlayerManager {
             };
         });
     }
+
+    // Get all player instances (for game mode logic)
+    getAllPlayers() {
+        return Array.from(this.players.values());
+    }
 }

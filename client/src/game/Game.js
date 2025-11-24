@@ -12,7 +12,7 @@ import { SocketClient } from "./SocketClient.js";
 
 export class Game {
     // [SỬA] Nhận thêm `socket`
-    constructor(canvas, ctx, navigateTo, SCREENS, socket, initialMapData, initialPlayerSetup, toast) {
+    constructor(canvas, ctx, navigateTo, SCREENS, socket, initialMapData, initialPlayerSetup, initialGameState, toast) {
         this.canvas = canvas;
         this.ctx = ctx;
         this.navigateTo = navigateTo;
@@ -38,6 +38,7 @@ export class Game {
         this.socket = socket;
         this.initialMapData = initialMapData;
         this.initialPlayerSetup = initialPlayerSetup;
+        this.initialGameState = initialGameState;
 
         // Đăng ký lắng nghe ngay lập tức
         // App.jsx cũng lắng nghe, nhưng Game.js sẽ chỉ xử lý tin nhắn game
@@ -65,6 +66,26 @@ export class Game {
             this.initialPlayerSetup = null; // Xóa đi sau khi dùng
         }
 
+        // Process initial game state if reconnecting
+        if (this.initialGameState) {
+            console.log("[Game.js] Loading game state from reconnect...");
+            if (this.initialGameState.players) {
+                this.initialGameState.players.forEach(playerState => {
+                    const newTank = new Tank(this.ctx);
+                    this.tanks.set(playerState.id, newTank);
+                    newTank.updateState(playerState);
+                });
+            }
+            if (this.initialGameState.bullets) {
+                this.initialGameState.bullets.forEach(bulletState => {
+                    const newBullet = new Bullet(this.ctx);
+                    this.bullets.set(bulletState.id, newBullet);
+                    newBullet.updateState(bulletState);
+                });
+            }
+            this.initialGameState = null; // Xóa đi sau khi dùng
+        }
+
         // [SỬA] Không cần connect() nữa vì App.jsx đã làm
         this.gameLoop();
     }
@@ -88,6 +109,29 @@ export class Game {
         // Server gửi thông tin map
         // Server gửi thông tin map
 
+        // Handle room state sync with game state
+        if (data.type === 'roomStateSync' && data.gameState) {
+            // Process the game state immediately to show all tanks
+            const gameState = data.gameState;
+            if (gameState.players) {
+                gameState.players.forEach(playerState => {
+                    if (!this.tanks.has(playerState.id)) {
+                        const newTank = new Tank(this.ctx);
+                        this.tanks.set(playerState.id, newTank);
+                    }
+                    this.tanks.get(playerState.id).updateState(playerState);
+                });
+            }
+            if (gameState.bullets) {
+                gameState.bullets.forEach(bulletState => {
+                    if (!this.bullets.has(bulletState.id)) {
+                        this.bullets.set(bulletState.id, new Bullet(this.ctx));
+                    }
+                    this.bullets.get(bulletState.id).updateState(bulletState);
+                });
+            }
+            return;
+        }
 
         // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
         if (data.type === 'update') {

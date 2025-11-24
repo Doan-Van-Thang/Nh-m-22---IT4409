@@ -5,7 +5,7 @@ import MiniMap from './MiniMap.jsx';
 
 
 //  Nhận `socket` từ App.jsx
-function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSetup, toast }) {
+function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSetup, initialGameState, toast }) {
     const canvasRef = useRef(null);
     const gameInstanceRef = useRef(null);
     const [countdown, setCountdown] = useState(3);
@@ -102,7 +102,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
 
         console.log("GameView: Khởi tạo Game...");
         // [SỬA] Truyền socket đã có vào Game
-        gameInstanceRef.current = new Game(canvas, ctx, navigateTo, SCREENS, socket, initialMapData, initialPlayerSetup, toast);
+        gameInstanceRef.current = new Game(canvas, ctx, navigateTo, SCREENS, socket, initialMapData, initialPlayerSetup, initialGameState, toast);
         // [SỬA] Game.js bây giờ sẽ tự start
         gameInstanceRef.current.start();
         console.log("GameView: Game đã bắt đầu.");
@@ -114,7 +114,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                 gameInstanceRef.current.stop();
             }
         };
-    }, [socket, navigateTo, SCREENS, initialMapData, initialPlayerSetup, toast]); // [SỬA] Thêm socket vào dependency
+    }, [socket, navigateTo, SCREENS, initialMapData, initialPlayerSetup, initialGameState, toast]); // [SỬA] Thêm socket vào dependency
 
     return (
         <div className="relative w-screen h-screen overflow-hidden bg-black">
