@@ -9,7 +9,7 @@ export class Bullet {
             damage: 10
         };
         this.trail = [];
-        this.maxTrailLength = 5;
+        this.maxTrailLength = 3; // Reduced from 5 for better performance
     }
 
     updateState(serverState) {
@@ -51,9 +51,9 @@ export class Bullet {
             ctx.fill();
         }
 
-        // Draw bullet glow
+        // Draw bullet glow (reduced for performance)
         ctx.shadowColor = isSuperBullet ? '#4ecdc4' : '#ffd700';
-        ctx.shadowBlur = isSuperBullet ? 20 : 15;
+        ctx.shadowBlur = isSuperBullet ? 12 : 8; // Reduced from 20/15
 
         // Outer glow
         const outerGradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 2);

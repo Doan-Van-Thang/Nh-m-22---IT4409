@@ -1,6 +1,7 @@
 // File: client/src/components/GameView.jsx
 import React, { useRef, useEffect, useState } from 'react';
 import { Game } from '../game/Game.js';
+import MiniMap from './MiniMap.jsx';
 
 
 //  Nhận `socket` từ App.jsx
@@ -16,14 +17,54 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         teamScore: { team1: 0, team2: 0 }
     });
 
+    // Update stats from game instance (throttled to 200ms for performance)
+    useEffect(() => {
+        const statsInterval = setInterval(() => {
+            if (gameInstanceRef.current) {
+                const game = gameInstanceRef.current;
+                const myTank = game.tanks.get(game.myPlayerId);
+
+                if (myTank && myTank.state) {
+                    // Calculate team scores
+                    let team1Kills = 0;
+                    let team2Kills = 0;
+
+                    game.tanks.forEach(tank => {
+                        if (tank.state.teamId === 1) {
+                            team1Kills += tank.state.kills || 0;
+                        } else if (tank.state.teamId === 2) {
+                            team2Kills += tank.state.kills || 0;
+                        }
+                    });
+
+                    setGameStats({
+                        kills: myTank.state.kills || 0,
+                        deaths: myTank.state.deaths || 0,
+                        score: myTank.state.score || 0,
+                        health: myTank.state.health || 100,
+                        ammo: 10,
+                        teamScore: { team1: team1Kills, team2: team2Kills }
+                    });
+                }
+            }
+        }, 200);
+
+        return () => clearInterval(statsInterval);
+    }, []);
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas || !socket) return; // [SỬA] Chờ cả socket
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        // Optimize canvas rendering
+        ctx.imageSmoothingEnabled = false;
+
         const handleResize = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            ctx.imageSmoothingEnabled = false;
         };
         handleResize();
         window.addEventListener('resize', handleResize);
@@ -35,22 +76,8 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         gameInstanceRef.current.start();
         console.log("GameView: Game đã bắt đầu.");
 
-        // Update stats periodically (you can hook this to actual game events)
-        const statsInterval = setInterval(() => {
-            if (gameInstanceRef.current && gameInstanceRef.current.player) {
-                const player = gameInstanceRef.current.player;
-                setGameStats(prev => ({
-                    ...prev,
-                    health: player.health || 100,
-                    ammo: player.ammo || 10,
-                    // Add more real-time stats from game
-                }));
-            }
-        }, 100);
-
         return () => {
             console.log("GameView: Hủy component, dừng game...");
-            clearInterval(statsInterval);
             window.removeEventListener('resize', handleResize);
             if (gameInstanceRef.current) {
                 gameInstanceRef.current.stop();
@@ -112,8 +139,8 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                                 <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full transition-all duration-300 ${gameStats.health > 60 ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                                                gameStats.health > 30 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
-                                                    'bg-gradient-to-r from-red-500 to-red-700 animate-pulse'
+                                            gameStats.health > 30 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                                                'bg-gradient-to-r from-red-500 to-red-700 animate-pulse'
                                             }`}
                                         style={{ width: `${gameStats.health}%` }}
                                     ></div>
@@ -131,15 +158,8 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                         </div>
                     </div>
 
-                    {/* Mini-map placeholder */}
-                    <div className="glass-dark p-3 rounded-xl">
-                        <div className="w-40 h-40 bg-gray-800/50 rounded-lg border-2 border-gray-600 relative overflow-hidden">
-                            <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm font-bold">
-                                MINI MAP
-                            </div>
-                            {/* Add mini-map rendering here */}
-                        </div>
-                    </div>
+                    {/* Mini-map with game instance */}
+                    <MiniMap game={gameInstanceRef.current} size={160} />
                 </div>
 
                 {/* Center Crosshair */}

@@ -10,7 +10,7 @@ export default class BulletManager {
     spawnBullet(player) {
         //Với xe tăng hình tròn, (x,y) là tâm
         let damage = 10;
-        let bulletSpeed = 5;
+        let bulletSpeed = 15;
 
         // Check if player has super bullet effect
         if (player.activeEffects.superBullet.active) {
@@ -78,6 +78,9 @@ export default class BulletManager {
 
                     // Kiểm tra xem người chơi có chết không
                     if (player.isDead()) {
+                        // Record death for killed player
+                        player.recordDeath();
+
                         if (shooter) {
                             shooter.levelUp(); // Tăng kill/level cho người bắn
                         }

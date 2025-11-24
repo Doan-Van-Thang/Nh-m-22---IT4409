@@ -240,10 +240,10 @@ export class Game {
     }
 
     draw() {
-        // 1. Vẽ nền (Giữ nguyên)
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = '#556B2F'; // Màu xanh rêu
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // 1. Clear and fill background (optimized)
+        const ctx = this.ctx;
+        ctx.fillStyle = '#556B2F';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // 2. [SỬA LẠI] Áp dụng "di chuyển" camera
         // (Dùng this.camX, this.camY đã tính trong update)

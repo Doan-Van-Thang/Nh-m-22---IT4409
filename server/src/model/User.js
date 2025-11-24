@@ -12,6 +12,8 @@ export default class User {
         this.health = 100;
         this.level = 1;
         this.kills = 0;
+        this.deaths = 0;
+        this.score = 0;
         this.active = false;
         this.velocity = { x: 0, y: 0 };
         this.speed = 0.5;
@@ -116,8 +118,14 @@ export default class User {
     levelUp() {
         this.kills++;
         this.level++;
+        this.score += 100; // Award 100 points per kill
         this.health = Math.min(this.health + 20, 100);
         this.radius = 25 + this.level * 2; // Tăng bán kính
+    }
+
+    recordDeath() {
+        this.deaths++;
+        this.score = Math.max(0, this.score - 50); // Lose 50 points on death
     }
 
     isDead() {
@@ -170,8 +178,7 @@ export default class User {
         this.x = x;
         this.y = y;
         this.health = 100;
-        this.level = 1;
-        this.kills = 0;
+        // Don't reset kills, deaths, score on respawn - keep stats
         this.radius = 25; // Reset về bán kính gốc
         this.velocity = { x: 0, y: 0 };
         this.active = true; // Kích hoạt lại

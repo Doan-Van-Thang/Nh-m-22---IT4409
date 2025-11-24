@@ -11,6 +11,9 @@ export class Tank {
             health: 100,
             radius: 25,
             teamId: teamId,
+            kills: 0,
+            deaths: 0,
+            score: 0,
             activeEffects: {
                 rapidFire: false,
                 shield: false,
@@ -22,7 +25,6 @@ export class Tank {
     }
 
     updateState(serverState) {
-        console.log(`[CLIENT] Received health ${serverState.health} for tank ${serverState.id}`);
         this.state.id = serverState.id;
         this.state.x = serverState.x;
         this.state.y = serverState.y;
@@ -31,6 +33,9 @@ export class Tank {
         this.state.health = serverState.health;
         this.state.radius = serverState.radius;
         this.state.teamId = serverState.teamId || this.teamId;
+        this.state.kills = serverState.kills || 0;
+        this.state.deaths = serverState.deaths || 0;
+        this.state.score = serverState.score || 0;
         this.state.activeEffects = serverState.activeEffects || this.state.activeEffects;
     }
 

@@ -90,9 +90,12 @@ export default class PlayerManager {
                 x: p.x,
                 y: p.y,
                 rotation: p.rotation,
-                health: p.health, //
+                health: p.health,
                 level: p.level,
                 radius: p.radius,
+                kills: p.kills,
+                deaths: p.deaths,
+                score: p.score,
                 activeEffects: {
                     rapidFire: p.activeEffects.rapidFire.active,
                     shield: p.activeEffects.shield.active,

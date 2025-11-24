@@ -5,13 +5,29 @@ export class Map {
     constructor(ctx) {
         this.ctx = ctx;
         this.walls = [];
+        this.obstacles = []; // Store raw obstacle data for mini-map
+        this.width = 0;
+        this.height = 0;
         this.mapWidth = 0;
         this.mapHeight = 0;
+        this.cachedBackgroundGradient = null;
     }
 
     updateMapData(mapData) {
         this.mapWidth = mapData.width;
         this.mapHeight = mapData.height;
+        this.width = mapData.width;
+        this.height = mapData.height;
+        this.obstacles = mapData.obstacles; // Store for mini-map
+
+        // Cache background gradient for performance
+        this.cachedBackgroundGradient = this.ctx.createRadialGradient(
+            this.mapWidth / 2, this.mapHeight / 2, 0,
+            this.mapWidth / 2, this.mapHeight / 2, this.mapWidth
+        );
+        this.cachedBackgroundGradient.addColorStop(0, '#3a4a3a');
+        this.cachedBackgroundGradient.addColorStop(0.5, '#2d3d2d');
+        this.cachedBackgroundGradient.addColorStop(1, '#1a2a1a');
 
         this.walls = [];
         mapData.obstacles.forEach(obs => {
@@ -24,38 +40,26 @@ export class Map {
     draw() {
         const ctx = this.ctx;
 
-        // Draw background with texture
+        // Draw background with cached gradient
         if (this.mapWidth > 0 && this.mapHeight > 0) {
-            // Base background gradient
-            const bgGradient = ctx.createRadialGradient(
-                this.mapWidth / 2, this.mapHeight / 2, 0,
-                this.mapWidth / 2, this.mapHeight / 2, this.mapWidth
-            );
-            bgGradient.addColorStop(0, '#3a4a3a');
-            bgGradient.addColorStop(0.5, '#2d3d2d');
-            bgGradient.addColorStop(1, '#1a2a1a');
-
-            ctx.fillStyle = bgGradient;
+            ctx.fillStyle = this.cachedBackgroundGradient || '#2d3d2d';
             ctx.fillRect(0, 0, this.mapWidth, this.mapHeight);
 
-            // Draw grid pattern
+            // Draw grid pattern (reduced density for performance)
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.lineWidth = 1;
 
-            const gridSize = 50;
+            const gridSize = 100; // Increased from 50 for better performance
+            ctx.beginPath();
             for (let x = 0; x <= this.mapWidth; x += gridSize) {
-                ctx.beginPath();
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, this.mapHeight);
-                ctx.stroke();
             }
-
             for (let y = 0; y <= this.mapHeight; y += gridSize) {
-                ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(this.mapWidth, y);
-                ctx.stroke();
             }
+            ctx.stroke();
 
             // Draw map border with 3D effect
             const borderWidth = 15;
