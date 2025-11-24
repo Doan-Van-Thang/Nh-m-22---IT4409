@@ -43,9 +43,10 @@ async function startServer() {
         // 4. Start network manager
         networkManager.start();
 
-        // 5. Start HTTP server
-        server.listen(PORT, () => {
-            logger.info(`Server started successfully on http://localhost:${PORT}`);
+        // 5. Start HTTP server on all network interfaces (0.0.0.0)
+        server.listen(PORT, '0.0.0.0', () => {
+            logger.info(`Server started successfully on http://0.0.0.0:${PORT}`);
+            logger.info(`Access from other devices using: http://192.168.0.103:${PORT}`);
         });
 
     } catch (error) {

@@ -2,6 +2,7 @@
 import World from './managers/World.js';
 import PlayerManager from './managers/PlayerManager.js';
 import BulletManager from './managers/BulletManager.js';
+import PowerUpManager from './managers/PowerUpManager.js';
 
 export default class GameEngine {
     constructor() {
@@ -11,6 +12,7 @@ export default class GameEngine {
         this.world = new World();
         this.bulletManager = new BulletManager(this.world);
         this.playerManager = new PlayerManager(this.world, this.bulletManager);
+        this.powerUpManager = new PowerUpManager(this.world);
 
         this.networkManager = null;
 
@@ -29,18 +31,19 @@ export default class GameEngine {
     }
 
     stop() {
-    if (this.loopInterval) {
-        clearInterval(this.loopInterval);
-        this.loopInterval = null;
-        console.log(`[GameEngine] Đã dừng vòng lặp game ${this.roomId}.`);
+        if (this.loopInterval) {
+            clearInterval(this.loopInterval);
+            this.loopInterval = null;
+            console.log(`[GameEngine] Đã dừng vòng lặp game ${this.roomId}.`);
+        }
     }
-}
 
     loop() {
         if (this.gameState === "game_over") return;
         // Cập nhật theo thứ tự
         this.playerManager.update();
         this.bulletManager.update(this.playerManager);
+        this.powerUpManager.update(this.playerManager);
         // (World không cần update)
 
         //Kiểm tra điều kiện thắng
@@ -78,6 +81,7 @@ export default class GameEngine {
         this.world = new World();
         this.bulletManager = new BulletManager(this.world);
         this.playerManager = new PlayerManager(this.world, this.bulletManager);
+        this.powerUpManager = new PowerUpManager(this.world);
         //Khởi tạo cờ trạng thái
         this.gameState = "running";
         //reset lại networkManager
@@ -95,7 +99,8 @@ export default class GameEngine {
         return {
             players: this.playerManager.getState(),
             bullets: this.bulletManager.getState(),
-            bases: this.world.getBaseHealths()
+            bases: this.world.getBaseHealths(),
+            powerUps: this.powerUpManager.getState()
         };
     }
 

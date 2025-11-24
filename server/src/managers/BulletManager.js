@@ -9,7 +9,16 @@ export default class BulletManager {
 
     spawnBullet(player) {
         //Với xe tăng hình tròn, (x,y) là tâm
-        const bullet = new Bullet(createId(), player.x, player.y, player.rotation, player.id, 30, 5);
+        let damage = 10;
+        let bulletSpeed = 5;
+
+        // Check if player has super bullet effect
+        if (player.activeEffects.superBullet.active) {
+            damage *= player.activeEffects.superBullet.multiplier;
+            bulletSpeed *= 1.5; // Super bullets are faster
+        }
+
+        const bullet = new Bullet(createId(), player.x, player.y, player.rotation, player.id, bulletSpeed, damage);
         this.bullets.set(bullet.id, bullet);
     }
 
@@ -38,7 +47,7 @@ export default class BulletManager {
                             this.bullets.delete(id);
                             return;
                         } else {
-                            obs.health -= 10;
+                            obs.health -= bullet.damage;
                             this.bullets.delete(id);
                             return;
                         }
@@ -62,7 +71,7 @@ export default class BulletManager {
                 // 3. Kiểm tra va chạm
                 if (collides(bullet, player)) {
                     // Có va chạm!
-                    player.takeDamage(10); // Giả sử 1 viên đạn 10 damage
+                    player.takeDamage(bullet.damage); // Use bullet's damage value
 
                     // Xóa viên đạn
                     this.bullets.delete(id);
@@ -83,7 +92,7 @@ export default class BulletManager {
                     return;
                 }
             }
-            
+
         });
     }
 
@@ -94,6 +103,7 @@ export default class BulletManager {
             y: b.y,
             rotation: b.rotation,
             playerId: b.playerId,
+            damage: b.damage
         }));
     }
 }

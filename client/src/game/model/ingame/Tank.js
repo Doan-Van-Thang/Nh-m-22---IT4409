@@ -10,8 +10,15 @@ export class Tank {
             angleTurret: 0,
             health: 100,
             radius: 25,
-            teamId: teamId
+            teamId: teamId,
+            activeEffects: {
+                rapidFire: false,
+                shield: false,
+                speedBoost: false,
+                superBullet: false
+            }
         };
+        this.effectAnimPhase = 0;
     }
 
     updateState(serverState) {
@@ -24,11 +31,18 @@ export class Tank {
         this.state.health = serverState.health;
         this.state.radius = serverState.radius;
         this.state.teamId = serverState.teamId || this.teamId;
+        this.state.activeEffects = serverState.activeEffects || this.state.activeEffects;
     }
 
     draw() {
-        const { x, y, angleBody, angleTurret, health, radius, teamId } = this.state;
+        const { x, y, angleBody, angleTurret, health, radius, teamId, activeEffects } = this.state;
         const ctx = this.ctx;
+
+        // Update animation phase
+        this.effectAnimPhase += 0.1;
+
+        // Draw active effect auras BEFORE the tank
+        this.drawEffectAuras(x, y, radius, activeEffects);
 
         // Team colors
         const teamColors = {
@@ -196,5 +210,108 @@ export class Tank {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight * 0.4);
         }
+
+        // Draw effect indicators
+        this.drawEffectIndicators(x, y, radius, activeEffects);
+    }
+
+    drawEffectAuras(x, y, radius, effects) {
+        const ctx = this.ctx;
+
+        // Shield aura
+        if (effects.shield) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            const pulseSize = radius * (1.8 + Math.sin(this.effectAnimPhase) * 0.1);
+
+            // Outer shield ring
+            ctx.strokeStyle = 'rgba(78, 205, 196, 0.6)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, pulseSize, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Inner shield ring
+            ctx.strokeStyle = 'rgba(78, 205, 196, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, pulseSize * 0.9, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Hexagon shield pattern
+            ctx.strokeStyle = 'rgba(78, 205, 196, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i + this.effectAnimPhase * 0.5;
+                const hx = Math.cos(angle) * pulseSize;
+                const hy = Math.sin(angle) * pulseSize;
+                if (i === 0) ctx.moveTo(hx, hy);
+                else ctx.lineTo(hx, hy);
+            }
+            ctx.closePath();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // Speed boost trail
+        if (effects.speedBoost) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            for (let i = 0; i < 3; i++) {
+                const offset = (i + 1) * 15;
+                const alpha = 0.3 - i * 0.1;
+                ctx.fillStyle = `rgba(255, 230, 109, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(-offset, 0, radius * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+    }
+
+    drawEffectIndicators(x, y, radius, effects) {
+        const ctx = this.ctx;
+        const indicators = [];
+
+        // Collect active effects
+        if (effects.rapidFire) indicators.push({ color: '#ff6b35', icon: '»' });
+        if (effects.superBullet) indicators.push({ color: '#a8dadc', icon: '★' });
+        if (effects.speedBoost) indicators.push({ color: '#ffe66d', icon: '⚡' });
+        if (effects.shield) indicators.push({ color: '#4ecdc4', icon: '◈' });
+
+        // Draw indicators above tank
+        const indicatorSize = 12;
+        const spacing = indicatorSize + 4;
+        const startX = x - (indicators.length * spacing) / 2 + spacing / 2;
+        const indicatorY = y - radius - 35;
+
+        indicators.forEach((indicator, index) => {
+            const ix = startX + index * spacing;
+
+            // Glow effect
+            ctx.shadowColor = indicator.color;
+            ctx.shadowBlur = 8;
+
+            // Circle background
+            ctx.fillStyle = indicator.color;
+            ctx.beginPath();
+            ctx.arc(ix, indicatorY, indicatorSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Icon
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(indicator.icon, ix, indicatorY);
+        });
+
+        ctx.shadowBlur = 0;
     }
 }

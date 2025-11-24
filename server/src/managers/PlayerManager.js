@@ -49,7 +49,21 @@ export default class PlayerManager {
     handleFire(playerId) {
         const player = this.players.get(playerId);
         if (player && player.active) {
-            this.bulletManager.spawnBullet(player);
+            // Check rapid fire cooldown
+            const now = Date.now();
+            const baseFireRate = 250; // Normal fire rate (ms)
+            let fireRate = baseFireRate;
+
+            // Apply rapid fire effect
+            if (player.activeEffects.rapidFire.active) {
+                fireRate = baseFireRate / player.activeEffects.rapidFire.multiplier;
+            }
+
+            // Check if enough time has passed since last shot
+            if (!player.lastFireTime || now - player.lastFireTime >= fireRate) {
+                this.bulletManager.spawnBullet(player);
+                player.lastFireTime = now;
+            }
         }
     }
 
@@ -79,6 +93,12 @@ export default class PlayerManager {
                 health: p.health, //
                 level: p.level,
                 radius: p.radius,
+                activeEffects: {
+                    rapidFire: p.activeEffects.rapidFire.active,
+                    shield: p.activeEffects.shield.active,
+                    speedBoost: p.activeEffects.speedBoost.active,
+                    superBullet: p.activeEffects.superBullet.active
+                }
             };
         });
     }

@@ -4,6 +4,7 @@ import { InputState } from "./InputState.js";
 import { InputHandler } from "./InputHandler.js";
 import { Base } from "./model/ingame/Base.js"
 import { Map as GameMap } from "./model/ingame/Map.js"; // Đổi tên thành GameMap
+import { PowerUp } from "./model/ingame/PowerUp.js";
 // BỎ: import { CheckCollision } from "./CheckCollision.js"; (Server sẽ làm việc này)
 
 // IMPORT LỚP MỚI
@@ -21,6 +22,7 @@ export class Game {
         this.tanks = new Map();
         this.bullets = new Map();
         this.bases = new Map();
+        this.powerUps = new Map();
         this.myPlayerId = null;
 
         this.inputState = new InputState();
@@ -89,7 +91,7 @@ export class Game {
 
         // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
         if (data.type === 'update') {
-            const { players, bullets, bases } = data;
+            const { players, bullets, bases, powerUps } = data;
 
             // --- Đồng bộ hóa XE TĂNG ---
             const seenTankIds = new Set();
@@ -125,6 +127,24 @@ export class Game {
                     this.bullets.delete(id);
                 }
             });
+
+            // --- Đồng bộ hóa POWER-UPS ---
+            if (powerUps) {
+                const seenPowerUpIds = new Set();
+                powerUps.forEach(powerUpState => {
+                    seenPowerUpIds.add(powerUpState.id);
+                    if (!this.powerUps.has(powerUpState.id)) {
+                        this.powerUps.set(powerUpState.id, new PowerUp(this.ctx));
+                    }
+                    this.powerUps.get(powerUpState.id).updateState(powerUpState);
+                });
+                // Xóa các power-up đã biến mất
+                this.powerUps.forEach((powerUp, id) => {
+                    if (!seenPowerUpIds.has(id)) {
+                        this.powerUps.delete(id);
+                    }
+                });
+            }
 
             //Đồng bộ máu của Base
             bases.forEach(baseState => {
@@ -239,6 +259,11 @@ export class Game {
         // 4. Vẽ đạn
         this.bullets.forEach(bullet => {
             bullet.draw(this.ctx);
+        });
+
+        // 4.5 Vẽ power-ups
+        this.powerUps.forEach(powerUp => {
+            powerUp.draw(this.ctx);
         });
 
         // 5. Vẽ xe tăng

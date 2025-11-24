@@ -2,7 +2,7 @@
 import { collides } from './utils.js';
 
 export default class User {
-    constructor(id, x, y,teamId) {
+    constructor(id, x, y, teamId) {
         this.id = id;
         this.teamId = teamId;
         this.x = x;
@@ -15,7 +15,16 @@ export default class User {
         this.active = false;
         this.velocity = { x: 0, y: 0 };
         this.speed = 0.5;
+        this.baseSpeed = 0.5;
         this.deathTime = 0;
+
+        // Power-up effects
+        this.activeEffects = {
+            rapidFire: { active: false, endTime: 0, multiplier: 1 },
+            shield: { active: false, endTime: 0, reduction: 0 },
+            speedBoost: { active: false, endTime: 0, multiplier: 1 },
+            superBullet: { active: false, endTime: 0, multiplier: 1 }
+        };
 
         // [THÊM LẠI PHẦN NÀY]
         this.inputState = {
@@ -35,7 +44,73 @@ export default class User {
     }
 
     takeDamage(amount) {
+        // Apply shield reduction if active
+        if (this.activeEffects.shield.active) {
+            const now = Date.now();
+            if (now < this.activeEffects.shield.endTime) {
+                amount *= (1 - this.activeEffects.shield.reduction);
+            } else {
+                this.activeEffects.shield.active = false;
+            }
+        }
         this.health -= amount;
+    }
+
+    heal(amount) {
+        this.health = Math.min(this.health + amount, 100);
+    }
+
+    activateEffect(effectType, duration, value) {
+        const now = Date.now();
+
+        switch (effectType) {
+            case 'rapidFire':
+                this.activeEffects.rapidFire = {
+                    active: true,
+                    endTime: now + duration,
+                    multiplier: value
+                };
+                break;
+            case 'shield':
+                this.activeEffects.shield = {
+                    active: true,
+                    endTime: now + duration,
+                    reduction: value
+                };
+                break;
+            case 'speedBoost':
+                this.activeEffects.speedBoost = {
+                    active: true,
+                    endTime: now + duration,
+                    multiplier: value
+                };
+                this.speed = this.baseSpeed * value;
+                break;
+            case 'superBullet':
+                this.activeEffects.superBullet = {
+                    active: true,
+                    endTime: now + duration,
+                    multiplier: value
+                };
+                break;
+        }
+    }
+
+    updateEffects() {
+        const now = Date.now();
+
+        // Check if speed boost expired
+        if (this.activeEffects.speedBoost.active && now >= this.activeEffects.speedBoost.endTime) {
+            this.activeEffects.speedBoost.active = false;
+            this.speed = this.baseSpeed;
+        }
+
+        // Check if other effects expired
+        ['rapidFire', 'shield', 'superBullet'].forEach(effect => {
+            if (this.activeEffects[effect].active && now >= this.activeEffects[effect].endTime) {
+                this.activeEffects[effect].active = false;
+            }
+        });
     }
 
     levelUp() {
@@ -51,6 +126,9 @@ export default class User {
 
     // Hàm va chạm hình tròn (đã sửa)
     updateMovement(obstacles) {
+        // Update active effects
+        this.updateEffects();
+
         // 1. Cập nhật vận tốc (Giữ nguyên)
         if (this.inputState.up) this.velocity.y -= this.speed;
         if (this.inputState.down) this.velocity.y += this.speed;
@@ -71,7 +149,7 @@ export default class User {
 
         // 5. Kiểm tra va chạm
         for (const obs of obstacles) {
-            if(obs.teamId && obs.teamId === this.teamId) continue;
+            if (obs.teamId && obs.teamId === this.teamId) continue;
             if (collides(this, obs)) {
                 this.x = oldX;
                 this.y = oldY;
