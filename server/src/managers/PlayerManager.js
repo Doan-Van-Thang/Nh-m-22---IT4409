@@ -22,11 +22,12 @@ export default class PlayerManager {
     }
 
     update() {
-        const { obstacles, mapWidth, mapHeight } = this.world;
+        const {mapWidth, mapHeight } = this.world;
 
         this.players.forEach((player) => {
             if (player.active) {
-                player.updateMovement(obstacles); // Va chạm tường
+                const nearbyObstacles = this.world.getNearbyObstacles(player.x, player.y);
+                player.updateMovement(nearbyObstacles); // Va chạm tường
                 player.clampToMap(mapWidth, mapHeight); // Va chạm biên
             }
             else if (player.deathTime > 0) {

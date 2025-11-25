@@ -1,6 +1,6 @@
 import { createId, collides } from '../model/utils.js';
 import { getSpawnPoint as getMapSpawnPoint } from '../config/maps.js';
-
+import SpatialGrid from '../utils/SpatialGrid.js';
 export default class World {
     constructor(mapConfig) {
         // Use map configuration or defaults
@@ -48,6 +48,14 @@ export default class World {
             ];
             this.obstacles = this.generateRandomObstacles().concat(this.bases);
         }
+        this.grid = new SpatialGrid(this.mapWidth, this.mapHeight, 200);
+        this.obstacles.forEach(obs => {
+            this.grid.insertStatic(obs);
+        });
+    }
+
+    getNearbyObstacles(x, y) {
+        return this.grid.retrieveStaticOnly(x, y);
     }
 
     getMapData() {
