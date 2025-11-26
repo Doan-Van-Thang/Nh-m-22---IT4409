@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Game } from '../game/Game.js';
 import MiniMap from './MiniMap.jsx';
+import { getGameModeInfo } from '../config/gameModes.js';
 
 const formatTime = (seconds) => {
     if (seconds === undefined || seconds === null || seconds < 0) return "0:00";
@@ -25,7 +26,8 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         health: 100,
         ammo: 10,
         teamScore: { team1: 0, team2: 0 },
-        timeRemaining: 0
+        timeRemaining: 0,
+        isTeamMode: true
     });
 
     // Countdown timer before match starts
@@ -66,20 +68,23 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
             if (gameInstanceRef.current) {
                 const game = gameInstanceRef.current;
                 const myTank = game.tanks.get(game.myPlayerId);
-                const modeState  = game.modeState;
+                const modeState = game.modeState;
+
+                const currentModeInfo = getGameModeInfo(game.gameMode);
+                const isTeamMode = currentModeInfo ? currentModeInfo.teams : true;
+
 
                 if (myTank && myTank.state) {
                     // Calculate team scores
                     let team1Kills = 0;
                     let team2Kills = 0;
 
-                    game.tanks.forEach(tank => {
-                        if (tank.state.teamId === 1) {
-                            team1Kills += tank.state.kills || 0;
-                        } else if (tank.state.teamId === 2) {
-                            team2Kills += tank.state.kills || 0;
-                        }
-                    });
+                    if (isTeamMode) {
+                        game.tanks.forEach(tank => {
+                            if (tank.state.teamId === 1) team1Kills += tank.state.kills || 0;
+                            else if (tank.state.teamId === 2) team2Kills += tank.state.kills || 0;
+                        });
+                    }
 
                     setGameStats({
                         kills: myTank.state.kills || 0,
@@ -88,7 +93,8 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                         health: myTank.state.health || 100,
                         ammo: 10,
                         teamScore: { team1: team1Kills, team2: team2Kills },
-                        timeRemaining: modeState.remainingTime
+                        timeRemaining: modeState.remainingTime,
+                        isTeamMode: isTeamMode
                     });
                 }
             }
@@ -176,8 +182,8 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
 
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
                 <div className={`px-5 py-2 rounded-xl border-2 font-mono font-bold text-3xl backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)] flex items-center gap-3 transition-all duration-300
-                    ${gameStats.timeRemaining < 30 
-                        ? 'bg-red-900/60 border-red-500 text-red-100 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]' 
+                    ${gameStats.timeRemaining < 30
+                        ? 'bg-red-900/60 border-red-500 text-red-100 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]'
                         : 'bg-gray-900/60 border-blue-500/50 text-white'
                     }`}>
                     <span className="text-2xl">⏱️</span>
@@ -190,18 +196,19 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                 {/* Top HUD */}
                 <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start animate-fade-in-down">
                     {/* Team Scores */}
-                    <div className="glass-dark px-6 py-3 rounded-xl flex items-center gap-4">
-                        <div className="text-center">
-                            <div className="text-red-400 font-bold text-2xl">{gameStats.teamScore.team1}</div>
-                            <div className="text-xs text-gray-400">RED</div>
+                    {gameStats.isTeamMode ? (
+                        <div className="glass-dark px-6 py-3 rounded-xl flex items-center gap-4">
+                            <div className="text-center">
+                                <div className="text-red-400 font-bold text-2xl">{gameStats.teamScore.team1}</div>
+                                <div className="text-xs text-gray-400">RED</div>
+                            </div>
+                            <div className="text-white text-xl">VS</div>
+                            <div className="text-center">
+                                <div className="text-blue-400 font-bold text-2xl">{gameStats.teamScore.team2}</div>
+                                <div className="text-xs text-gray-400">BLUE</div>
+                            </div>
                         </div>
-                        <div className="text-white text-xl">VS</div>
-                        <div className="text-center">
-                            <div className="text-blue-400 font-bold text-2xl">{gameStats.teamScore.team2}</div>
-                            <div className="text-xs text-gray-400">BLUE</div>
-                        </div>
-                    </div>
-
+                    ) : (<div></div>)}
                     {/* Player Stats */}
                     <div className="glass-dark px-6 py-3 rounded-xl">
                         <div className="flex gap-6 text-white">

@@ -10,7 +10,8 @@ const TeamColumn = ({
     players,
     currentUserId,
     onJoin,
-    hostId
+    hostId,
+    isTeamMode
 }) => {
     const isMyTeam = players.find(p => p.id === currentUserId);
 
@@ -23,6 +24,10 @@ const TeamColumn = ({
         blue: {
             bg: 'bg-blue-100', border: 'border-blue-400', title: 'text-blue-700',
             btn: 'bg-blue-600 hover:bg-blue-700', myTeamBg: 'bg-blue-200', myTeamText: 'text-blue-700'
+        },
+        purple: {
+            bg: 'bg-purple-100', border: 'border-purple-400', title: 'text-purple-700',
+            btn: 'hidden', myTeamBg: 'bg-purple-200', myTeamText: 'text-purple-700' // btn hidden vì không cần nút join
         }
     }[teamColor];
 
@@ -46,22 +51,23 @@ const TeamColumn = ({
                     </div>
                 )}
             </div>
-
-            <div className="mt-4 text-center">
-                {currentUserId && !isMyTeam && (
-                    <button
-                        onClick={onJoin}
-                        className={`w-full py-3 ${colors.btn} text-white font-bold rounded-lg shadow transition transform active:scale-95`}
-                    >
-                        Gia nhập {teamName}
-                    </button>
-                )}
-                {isMyTeam && (
-                    <div className={`py-3 ${colors.myTeamText} font-bold ${colors.myTeamBg} rounded-lg border border-white/50`}>
-                        ✓ Bạn đang ở đội này
-                    </div>
-                )}
-            </div>
+            {isTeamMode && (
+                <div className="mt-4 text-center">
+                    {currentUserId && !isMyTeam && (
+                        <button
+                            onClick={onJoin}
+                            className={`w-full py-3 ${colors.btn} text-white font-bold rounded-lg shadow transition transform active:scale-95`}
+                        >
+                            Gia nhập {teamName}
+                        </button>
+                    )}
+                    {isMyTeam && (
+                        <div className={`py-3 ${colors.myTeamText} font-bold ${colors.myTeamBg} rounded-lg border border-white/50`}>
+                            ✓ Bạn đang ở đội này
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
@@ -77,14 +83,24 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
 
     if (!room) return null;
 
+    const modeInfo = getGameModeInfo(room.gameMode);
+    const isTeamMode = modeInfo.teams;
+
     const isHost = auth.id === room.hostId;
     const team1Players = room.players.filter(p => p.teamId === 1);
     const team2Players = room.players.filter(p => p.teamId === 2);
 
     const handleStartGame = () => {
-        if (team1Players.length === 0 || team2Players.length === 0) {
-            toast.warning("Cần ít nhất 1 người mỗi đội để bắt đầu!");
-            return;
+        if (isTeamMode) {
+            if (team1Players.length === 0 || team2Players.length === 0) {
+                toast.warning("Cần ít nhất 1 người mỗi đội để bắt đầu!");
+                return;
+            }
+        } else {
+            if (room.players.length < 2) {
+                toast.warning("Cần ít nhất 2 người chơi để bắt đầu!");
+                return;
+            }
         }
         socket.send({ type: 'startGame' });
     };
@@ -94,6 +110,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
     };
 
     const handleSwitchTeam = (teamId) => {
+        if (!isTeamMode) return; // Không cho chuyển đội nếu không phải chế độ đội
         socket.send({ type: 'switchTeam', teamId: teamId });
     };
 
@@ -131,9 +148,17 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="text-3xl font-black bg-gradient-to-r from-gray-100 to-gray-200 px-5 py-3 rounded-xl shadow-lg border-2 border-gray-300">
-                            <span className="text-red-600 animate-pulse">{team1Players.length}</span>
-                            <span className="mx-3 text-gray-400">VS</span>
-                            <span className="text-blue-600 animate-pulse">{team2Players.length}</span>
+                            {isTeamMode ? (
+                                <>
+                                    <span className="text-red-600 animate-pulse">{team1Players.length}</span>
+                                    <span className="mx-3 text-gray-400">VS</span>
+                                    <span className="text-blue-600 animate-pulse">{team2Players.length}</span>
+                                </>
+                            ) : (
+                                <span className="text-purple-600 animate-pulse flex items-center gap-2">
+                                    <span>👥</span> {room.players.length}
+                                </span>
+                            )}
                         </div>
                         {isHost && (
                             <button
@@ -175,24 +200,45 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
             </div>
 
             {/* Khu vực chia đội (Grid layout) */}
-            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-1 relative z-10 animate-fade-in-up">
-                <TeamColumn
-                    teamName="Đội Đỏ"
-                    teamColor="red"
-                    players={team1Players}
-                    currentUserId={auth.id}
-                    hostId={room.hostId}
-                    onJoin={() => handleSwitchTeam(1)}
-                />
+            <div className={`w-full max-w-6xl mb-8 flex-1 relative z-10 animate-fade-in-up 
+                ${isTeamMode 
+                    ? 'grid grid-cols-1 md:grid-cols-2 gap-6' 
+                    : 'flex justify-center items-start'     
+                }`}>
+                {isTeamMode ? (
+                    <>
+                        <TeamColumn
+                            teamName="Đội Đỏ"
+                            teamColor="red"
+                            players={team1Players}
+                            currentUserId={auth.id}
+                            hostId={room.hostId}
+                            onJoin={() => handleSwitchTeam(1)}
+                        />
 
-                <TeamColumn
-                    teamName="Đội Xanh"
-                    teamColor="blue"
-                    players={team2Players}
-                    currentUserId={auth.id}
-                    hostId={room.hostId}
-                    onJoin={() => handleSwitchTeam(2)}
-                />
+                        <TeamColumn
+                            teamName="Đội Xanh"
+                            teamColor="blue"
+                            players={team2Players}
+                            currentUserId={auth.id}
+                            hostId={room.hostId}
+                            onJoin={() => handleSwitchTeam(2)}
+                        />
+                    </>
+                ) : (
+                    <div className="w-full max-w-3xl">
+                        <TeamColumn
+                            teamName="Danh Sách Chiến Binh"
+                            teamColor="purple"
+                            players={room.players}
+                            currentUserId={auth.id}
+                            hostId={room.hostId}
+                            onJoin={() => {}} 
+                            isTeamMode={false} // Ẩn nút join
+                        />
+                    </div>
+                )}
+
             </div>
 
             {/* Footer Actions */}
@@ -207,12 +253,18 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                 {isHost ? (
                     <button
                         onClick={handleStartGame}
+                        disabled={isTeamMode 
+                            ? !(team1Players.length > 0 && team2Players.length > 0)
+                            : room.players.length < 2 // Ít nhất 2 người cho FFA (có thể sửa thành < 1 để test mình)
+                        }
                         className={`flex-[2] py-5 text-white text-xl font-bold rounded-xl shadow-2xl transition-all transform 
-                            ${(team1Players.length > 0 && team2Players.length > 0)
+                            ${(isTeamMode
+                                ? (team1Players.length > 0 && team2Players.length > 0)
+                                : room.players.length >= 2)
                                 ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105 animate-pulse-glow'
                                 : 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed opacity-60'
                             }`}
-                        disabled={!(team1Players.length > 0 && team2Players.length > 0)}
+                        
                     >
                         🚀 BẮT ĐẦU TRẬN ĐẤU
                     </button>

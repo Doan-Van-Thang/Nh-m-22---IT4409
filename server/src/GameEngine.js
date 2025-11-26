@@ -193,9 +193,10 @@ export default class GameEngine {
                         }
                     } else {
                         // FFA kill limit
-                        for (const [playerId, score] of this.playerScores.entries()) {
-                            if (score >= this.modeConfig.killLimit * 100) {
-                                this.endGame(playerId, 'killLimit');
+                        const players = this.playerManager.getAllPlayers();
+                        for (const player of players) {
+                            if (player.kills >= this.modeConfig.killLimit) {
+                                this.endGame(player.id, 'killLimit');
                                 return;
                             }
                         }

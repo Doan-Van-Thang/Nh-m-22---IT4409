@@ -136,7 +136,10 @@ export class Game {
 
         // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
         if (data.type === 'update') {
-            const { players, bullets, bases, powerUps, modeState } = data;
+            const { players, bullets, bases, powerUps, modeState,gameMode } = data;
+            if (gameMode) {
+                this.gameMode = gameMode;
+            }
 
             if (modeState) {
                 this.modeState = modeState;
