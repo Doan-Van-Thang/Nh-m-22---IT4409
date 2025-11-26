@@ -27,6 +27,7 @@ export class Game {
 
         this.inputState = new InputState();
         this.inputHandler = new InputHandler(this.inputState, this.canvas);
+        this.modeState = {};
 
         this.map = new GameMap(this.ctx);
         this.gameLoopId = null;
@@ -135,7 +136,11 @@ export class Game {
 
         // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
         if (data.type === 'update') {
-            const { players, bullets, bases, powerUps } = data;
+            const { players, bullets, bases, powerUps, modeState } = data;
+
+            if (modeState) {
+                this.modeState = modeState;
+            }
 
             // --- Đồng bộ hóa XE TĂNG ---
             const seenTankIds = new Set();

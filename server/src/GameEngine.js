@@ -3,7 +3,7 @@ import World from './managers/World.js';
 import PlayerManager from './managers/PlayerManager.js';
 import BulletManager from './managers/BulletManager.js';
 import PowerUpManager from './managers/PowerUpManager.js';
-import { getGameModeConfig, GAME_MODES } from './config/gameModes.js';
+import { getGameModeConfig, GAME_MODES, GAME_MODE_CONFIG } from './config/gameModes.js';
 import { getMapForMode, isInSafeZone } from './config/maps.js';
 
 export default class GameEngine {
@@ -329,6 +329,11 @@ export default class GameEngine {
 
     // --- Cung cấp state cho NetworkManager ---
     getGameState() {
+        const now = Date.now();
+        const elapsedTime = Math.floor((now - this.gameStartTime) / 1000);
+        const timeLimit = this.modeConfig.timeLimit;
+        const remainingTime = Math.max(0, timeLimit - elapsedTime);
+
         return {
             players: this.playerManager.getState(),
             bullets: this.bulletManager.getState(),
@@ -340,7 +345,8 @@ export default class GameEngine {
                 safeZoneRadius: this.safeZoneRadius,
                 controllingTeam: this.controllingTeam,
                 captures: this.captures,
-                gameTime: Math.floor((Date.now() - this.gameStartTime) / 1000),
+                gameTime: elapsedTime,
+                remainingTime: remainingTime,
             }
         };
     }

@@ -3,6 +3,12 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Game } from '../game/Game.js';
 import MiniMap from './MiniMap.jsx';
 
+const formatTime = (seconds) => {
+    if (seconds === undefined || seconds === null || seconds < 0) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+};
 
 //  Nhận `socket` từ App.jsx
 function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSetup, initialGameState, toast }) {
@@ -18,7 +24,8 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         score: 0,
         health: 100,
         ammo: 10,
-        teamScore: { team1: 0, team2: 0 }
+        teamScore: { team1: 0, team2: 0 },
+        timeRemaining: 0
     });
 
     // Countdown timer before match starts
@@ -59,6 +66,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
             if (gameInstanceRef.current) {
                 const game = gameInstanceRef.current;
                 const myTank = game.tanks.get(game.myPlayerId);
+                const modeState  = game.modeState;
 
                 if (myTank && myTank.state) {
                     // Calculate team scores
@@ -79,7 +87,8 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                         score: myTank.state.score || 0,
                         health: myTank.state.health || 100,
                         ammo: 10,
-                        teamScore: { team1: team1Kills, team2: team2Kills }
+                        teamScore: { team1: team1Kills, team2: team2Kills },
+                        timeRemaining: modeState.remainingTime
                     });
                 }
             }
@@ -164,6 +173,17 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                     </div>
                 </div>
             )}
+
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
+                <div className={`px-5 py-2 rounded-xl border-2 font-mono font-bold text-3xl backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)] flex items-center gap-3 transition-all duration-300
+                    ${gameStats.timeRemaining < 30 
+                        ? 'bg-red-900/60 border-red-500 text-red-100 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]' 
+                        : 'bg-gray-900/60 border-blue-500/50 text-white'
+                    }`}>
+                    <span className="text-2xl">⏱️</span>
+                    <span>{formatTime(gameStats.timeRemaining)}</span>
+                </div>
+            </div>
 
             {/* HUD Overlay */}
             <div className="absolute inset-0 pointer-events-none">
