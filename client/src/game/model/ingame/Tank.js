@@ -187,7 +187,8 @@ export class Tank {
             ctx.fillRect(barX, barY, barWidth, barHeight);
 
             // Health fill with color based on percentage
-            const healthPercent = health / 100;
+            const displayHealth = Math.max(0, health);
+            const healthPercent = displayHealth / 100;
             let healthColor;
             if (healthPercent > 0.6) {
                 healthColor = ctx.createLinearGradient(barX, barY, barX, barY + barHeight);

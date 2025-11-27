@@ -90,7 +90,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                         kills: myTank.state.kills || 0,
                         deaths: myTank.state.deaths || 0,
                         score: myTank.state.score || 0,
-                        health: myTank.state.health || 100,
+                        health: Math.max(0,myTank.state.health) || 100,
                         ammo: 10,
                         teamScore: { team1: team1Kills, team2: team2Kills },
                         timeRemaining: modeState.remainingTime,
@@ -237,7 +237,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                             <div className="flex-1">
                                 <div className="flex justify-between text-sm text-white mb-1">
                                     <span className="font-bold">HEALTH</span>
-                                    <span className="font-bold">{gameStats.health}%</span>
+                                    <span className="font-bold">{Math.max(0, gameStats.health)}%</span>
                                 </div>
                                 <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
                                     <div
@@ -245,7 +245,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                                             gameStats.health > 30 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
                                                 'bg-gradient-to-r from-red-500 to-red-700 animate-pulse'
                                             }`}
-                                        style={{ width: `${gameStats.health}%` }}
+                                        style={{ width: `${Math.max(0, gameStats.health)}%` }}
                                     ></div>
                                 </div>
                             </div>

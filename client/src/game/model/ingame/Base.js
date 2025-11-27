@@ -126,7 +126,8 @@ export class Base {
         ctx.fillRect(barX, barY, barWidth, barHeight);
 
         // Health fill with glow effect
-        const healthPercent = health / 200;
+        const displayHealth = Math.max(0, health);
+        const healthPercent = displayHealth / 200;
         let healthGradient;
 
         if (healthPercent > 0.6) {

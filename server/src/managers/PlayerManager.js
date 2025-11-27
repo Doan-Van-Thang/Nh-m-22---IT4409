@@ -23,6 +23,7 @@ export default class PlayerManager {
 
     update() {
         const {mapWidth, mapHeight } = this.world;
+        const playersArray = Array.from(this.players.values());
 
         this.players.forEach((player) => {
             if (player.active) {
@@ -36,6 +37,43 @@ export default class PlayerManager {
                 }
             }
         });
+
+        for (let i = 0; i < playersArray.length; i++) {
+            for (let j = i + 1; j < playersArray.length; j++) {
+                const p1 = playersArray[i];
+                const p2 = playersArray[j];
+
+                // Chỉ check nếu cả 2 đều đang sống
+                if (!p1.active || !p2.active) continue;
+
+                // Tính khoảng cách giữa 2 xe tăng
+                const dx = p1.x - p2.x;
+                const dy = p1.y - p2.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDistance = p1.radius + p2.radius; // Tổng bán kính
+
+                // Nếu khoảng cách nhỏ hơn tổng bán kính => Đang đè lên nhau
+                if (distance < minDistance) {
+                    // Tính độ lún (overlap)
+                    const overlap = minDistance - distance;
+                    
+                    // Tính góc đẩy
+                    const angle = distance === 0 ? Math.random() * Math.PI * 2 : Math.atan2(dy, dx);
+
+                    const pushX = Math.cos(angle) * (overlap / 2);
+                    const pushY = Math.sin(angle) * (overlap / 2);
+
+                    p1.x += pushX;
+                    p1.y += pushY;
+
+                    p2.x -= pushX;
+                    p2.y -= pushY;
+                    
+                    p1.clampToMap(mapWidth, mapHeight);
+                    p2.clampToMap(mapWidth, mapHeight);
+                }
+            }
+        }
     }
 
     // Xử lý hành động
