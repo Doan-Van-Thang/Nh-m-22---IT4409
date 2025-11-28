@@ -72,14 +72,19 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
 
                 const currentModeInfo = getGameModeInfo(game.gameMode);
                 const isTeamMode = currentModeInfo ? currentModeInfo.teams : true;
+                const isCaptureFlag = game.gameMode === 'captureFlag';
 
 
                 if (myTank && myTank.state) {
                     // Calculate team scores
                     let team1Kills = 0;
                     let team2Kills = 0;
+                    if(isCaptureFlag){
+                        team1Kills = modeState.captures ? modeState.captures[1] : 0;
+                        team2Kills = modeState.captures ? modeState.captures[2] : 0;
+                    }
 
-                    if (isTeamMode) {
+                    else if (isTeamMode) {
                         game.tanks.forEach(tank => {
                             if (tank.state.teamId === 1) team1Kills += tank.state.kills || 0;
                             else if (tank.state.teamId === 2) team2Kills += tank.state.kills || 0;
@@ -94,7 +99,9 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                         ammo: 10,
                         teamScore: { team1: team1Kills, team2: team2Kills },
                         timeRemaining: modeState.remainingTime,
-                        isTeamMode: isTeamMode
+                        isTeamMode: isTeamMode,
+                        gameMode: game.gameMode
+
                     });
                 }
             }
@@ -198,16 +205,33 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                     {/* Team Scores */}
                     {gameStats.isTeamMode ? (
                         <div className="glass-dark px-6 py-3 rounded-xl flex items-center gap-4">
-                            <div className="text-center">
-                                <div className="text-red-400 font-bold text-2xl">{gameStats.teamScore.team1}</div>
-                                <div className="text-xs text-gray-400">RED</div>
-                            </div>
-                            <div className="text-white text-xl">VS</div>
-                            <div className="text-center">
-                                <div className="text-blue-400 font-bold text-2xl">{gameStats.teamScore.team2}</div>
-                                <div className="text-xs text-gray-400">BLUE</div>
-                            </div>
-                        </div>
+            {/* ĐỘI ĐỎ */}
+            <div className="text-center">
+                <div className="text-red-400 font-bold text-2xl flex items-center justify-center gap-2">
+                    {/* Nếu là Cướp Cờ thì hiện icon Cờ */}
+                    {gameStats.gameMode === 'captureFlag' && <span className="text-xl">🚩</span>}
+                    {gameStats.teamScore.team1}
+                </div>
+                <div className="text-xs text-gray-400 font-bold tracking-wider">
+                    {/* Đổi chữ RED TEAM thành CAPTURES nếu là chế độ cờ */}
+                    {gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'RED TEAM'}
+                </div>
+            </div>
+
+            {/* VS */}
+            <div className="text-white text-xl opacity-50 font-bold mx-2">VS</div>
+
+            {/* ĐỘI XANH */}
+            <div className="text-center">
+                <div className="text-blue-400 font-bold text-2xl flex items-center justify-center gap-2">
+                    {gameStats.teamScore.team2}
+                    {gameStats.gameMode === 'captureFlag' && <span className="text-xl">🚩</span>}
+                </div>
+                <div className="text-xs text-gray-400 font-bold tracking-wider">
+                    {gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'BLUE TEAM'}
+                </div>
+            </div>
+        </div>
                     ) : (<div></div>)}
                     {/* Player Stats */}
                     <div className="glass-dark px-6 py-3 rounded-xl">

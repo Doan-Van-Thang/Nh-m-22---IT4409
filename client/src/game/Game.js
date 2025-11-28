@@ -3,11 +3,11 @@ import { Bullet } from "./model/ingame/Bullet.js";
 import { InputState } from "./InputState.js";
 import { InputHandler } from "./InputHandler.js";
 import { Base } from "./model/ingame/Base.js"
-import { Map as GameMap } from "./model/ingame/Map.js"; // Đổi tên thành GameMap
+import { Map as GameMap } from "./model/ingame/Map.js";
 import { PowerUp } from "./model/ingame/PowerUp.js";
-// BỎ: import { CheckCollision } from "./CheckCollision.js"; (Server sẽ làm việc này)
+import { Flag } from "./model/ingame/Flag.js";
 
-// IMPORT LỚP MỚI
+
 import { SocketClient } from "./SocketClient.js";
 
 export class Game {
@@ -28,6 +28,7 @@ export class Game {
         this.inputState = new InputState();
         this.inputHandler = new InputHandler(this.inputState, this.canvas);
         this.modeState = {};
+        this.flags = new Map();
 
         this.map = new GameMap(this.ctx);
         this.gameLoopId = null;
@@ -104,11 +105,6 @@ export class Game {
 
     // [SỬA] handleServerMessage
     handleServerMessage(data) {
-        // App.jsx sẽ xử lý 'loginSuccess', 'authError'
-
-
-        // Server gửi thông tin map
-        // Server gửi thông tin map
 
         // Handle room state sync with game state
         if (data.type === 'roomStateSync' && data.gameState) {
@@ -136,13 +132,22 @@ export class Game {
 
         // Đây là tin nhắn quan trọng nhất, chạy 60 lần/giây
         if (data.type === 'update') {
-            const { players, bullets, bases, powerUps, modeState,gameMode } = data;
+            const { players, bullets, bases, powerUps, modeState, gameMode, flags } = data;
             if (gameMode) {
                 this.gameMode = gameMode;
             }
 
             if (modeState) {
                 this.modeState = modeState;
+            }
+
+            if (flags) {
+                flags.forEach(flagState => {
+                    if (!this.flags.has(flagState.id)) {
+                        this.flags.set(flagState.id, new Flag(this.ctx, flagState));
+                    }
+                    this.flags.get(flagState.id).updateState(flagState);
+                });
             }
 
             // --- Đồng bộ hóa XE TĂNG ---
@@ -305,6 +310,10 @@ export class Game {
         // 5. Vẽ xe tăng
         this.tanks.forEach(tank => {
             tank.draw(this.ctx);
+        });
+
+        this.flags.forEach(flag => {
+            flag.draw();
         });
 
         // 6. [SỬA LẠI] Khôi phục lại canvas

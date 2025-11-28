@@ -1,8 +1,9 @@
 import { createId, collides } from '../model/utils.js';
 import { getSpawnPoint as getMapSpawnPoint } from '../config/maps.js';
 import SpatialGrid from '../utils/SpatialGrid.js';
+import { GAME_MODES } from '../config/gameModes.js';
 export default class World {
-    constructor(mapConfig) {
+    constructor(mapConfig, gameMode) {
         // Use map configuration or defaults
         if (mapConfig) {
             this.mapWidth = mapConfig.width;
@@ -32,7 +33,10 @@ export default class World {
             this.flags = mapConfig.flags;
 
             // Add bases to obstacles for collision
-            this.obstacles = this.obstacles.concat(this.bases);
+            if(gameMode !== GAME_MODES.CAPTURE_FLAG) {
+                this.obstacles = this.obstacles.concat(this.bases);
+            }
+            
         } else {
             // Fallback to old default map
             this.mapWidth = 2500;

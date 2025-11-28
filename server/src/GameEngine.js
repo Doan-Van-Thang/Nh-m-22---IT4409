@@ -16,7 +16,7 @@ export default class GameEngine {
         // 2. Initialize managers with mode-specific map
         this.gameState = "running";
         this.roomId = null;
-        this.world = new World(this.mapConfig);
+        this.world = new World(this.mapConfig, this.gameMode);
         this.bulletManager = new BulletManager(this.world);
         this.playerManager = new PlayerManager(this.world, this.bulletManager);
         this.powerUpManager = new PowerUpManager(this.world);
@@ -37,10 +37,27 @@ export default class GameEngine {
         this.hillControlTime = { 1: 0, 2: 0 };
 
         // Capture the Flag specific
-        this.flags = new Map(); // flag positions and carriers
+        this.flags = [];
+        if (this.gameMode === GAME_MODES.CAPTURE_FLAG && this.mapConfig.flags) {
+            this.initFlags();
+        }
         this.captures = { 1: 0, 2: 0 };
 
         console.log(`[GameEngine] Initialized with mode: ${gameMode}`);
+    }
+    initFlags() {
+        this.flags = this.mapConfig.flags.map(f => ({
+            id: `flag_${f.team}`,
+            teamId: f.team === 'red' ? 1 : 2, // Đội sở hữu cờ
+            x: f.x,
+            y: f.y,
+            homeX: f.x,
+            homeY: f.y,
+            state: 'AT_BASE',
+            carrierId: null,
+            radius: 80 // Bán kính va chạm
+        }));
+        console.log("[GameEngine] Flags initialized:", this.flags);
     }
     setNetworkManager(manager, roomId) {
         this.networkManager = manager;
@@ -158,8 +175,73 @@ export default class GameEngine {
     }
 
     updateCaptureTheFlag() {
-        // Flag capture logic - simplified for now
-        // Full implementation would track flag carriers, returns, etc.
+        if (this.flags.length === 0) return;
+        const players = this.playerManager.getAllPlayers();
+        this.flags.forEach(flag => {
+            if (flag.state === 'CARRIED') {
+                const carrier = this.playerManager.players.get(flag.carrierId);
+                if (!carrier || !carrier.active || carrier.health <= 0) {
+                    flag.state = 'DROPPED';
+                    flag.carrierId = null;
+                    console.log(`[CTF] Flag ${flag.teamId} dropped!`);
+                    return;
+                }
+                flag.x = carrier.x; // Vị trí cờ cập nhật theo người cầm
+                flag.y = carrier.y;
+
+                //Kiểm tra logic ghi điểm
+                if (flag.teamId !== carrier.teamId) {
+                    const myBase = this.world.bases.find(b => b.teamId === carrier.teamId);
+                    if (myBase) {
+                        const dx = carrier.x - (myBase.x + myBase.width / 2);
+                        const dy = carrier.y - (myBase.y + myBase.height / 2);
+                        const distToBase = Math.sqrt(dx * dx + dy * dy);
+                        if (distToBase <= 100) {
+                            this.handleFlagCapture(carrier, flag);
+                        }
+
+                    }
+                }
+            }
+            else {
+                for (const player of players) {
+                    if(!player.active) continue;
+                    const dx = player.x - flag.x;
+                    const dy = player.y - flag.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if(distance < (player.radius + flag.radius)) {
+                        // Chạm cờ địch -> nhặt cờ
+                        if (flag.teamId !== player.teamId) {
+                            flag.state = 'CARRIED';
+                            flag.carrierId = player.id;
+                            console.log(`[CTF] Player ${player.id} picked up flag ${flag.teamId}`);
+                        }
+                        //chạm vào cờ đội mình nhưng bị rơi -> về lại base
+                        else if (player.teamId === flag.teamId && flag.state === 'DROPPED') {
+                            this.returnFlagHome(flag);
+                            // Cộng điểm phục hồi cho người chơi
+                            player.score += this.modeConfig.scoreRules.flagReturn;
+                            console.log(`[CTF] Player ${player.name} returned flag home!`);
+
+                        }
+                    }
+                }
+            }
+        });
+    }
+    handleFlagCapture(player, flag) {
+        this.captures[player.teamId]++;
+        player.score += this.modeConfig.scoreRules.flagCapture;
+        console.log(`[CTF] Player ${player.teamId} SCORED! Total: ${this.captures[player.teamId]}`);
+        this.returnFlagHome(flag);
+    }
+
+    returnFlagHome(flag) {
+        flag.state = 'AT_BASE';
+        flag.x = flag.homeX;
+        flag.y = flag.homeY;
+        flag.carrierId = null;
     }
 
     checkWinConditions() {
@@ -300,7 +382,7 @@ export default class GameEngine {
 
         // Re-initialize with same game mode
         this.mapConfig = getMapForMode(this.gameMode);
-        this.world = new World(this.mapConfig);
+        this.world = new World(this.mapConfig, this.gameMode);
         this.bulletManager = new BulletManager(this.world);
         this.playerManager = new PlayerManager(this.world, this.bulletManager);
         this.powerUpManager = new PowerUpManager(this.world);
@@ -318,6 +400,11 @@ export default class GameEngine {
         this.hillControlTime = { 1: 0, 2: 0 };
         this.flags.clear();
         this.captures = { 1: 0, 2: 0 };
+
+        if (this.gameMode === GAME_MODES.CAPTURE_FLAG && this.mapConfig.flags) {
+            this.initFlags();
+        }
+
 
         // Reset network manager
         if (this.networkManager) {
@@ -341,6 +428,7 @@ export default class GameEngine {
             bases: this.world.getBaseHealths(),
             powerUps: this.powerUpManager.getState(),
             gameMode: this.gameMode,
+            flags: this.flags,
             modeState: {
                 teamScores: this.teamScores,
                 safeZoneRadius: this.safeZoneRadius,
