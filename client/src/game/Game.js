@@ -142,7 +142,12 @@ export class Game {
             }
 
             if(modeState && this.map) {
-                this.map.setControllingTeam(modeState.controllingTeam);
+                if (modeState.controllingTeam !== undefined) {
+                    this.map.setControllingTeam(modeState.controllingTeam);
+                }
+                if (modeState.safeZoneRadius !== undefined) {
+                    this.map.updateSafeZone(modeState.safeZoneRadius);
+                }
             }
 
             if (flags) {

@@ -11,9 +11,13 @@ export class Map {
         this.mapWidth = 0;
         this.mapHeight = 0;
         this.cachedBackgroundGradient = null;
+
         this.controlZone = null;
         this.controllingTeam = null;
         this.animPulse = 0;
+
+        this.safeZoneConfig = null;
+        this.currentSafeRadius = 0;
     }
 
     updateMapData(mapData) {
@@ -24,6 +28,7 @@ export class Map {
         this.obstacles = mapData.obstacles; // Store for mini-map
 
         this.controlZone = mapData.controlZone;
+        this.safeZoneConfig = mapData.safeZone;
 
         // Cache background gradient for performance
         this.cachedBackgroundGradient = this.ctx.createRadialGradient(
@@ -43,6 +48,9 @@ export class Map {
     }
     setControllingTeam(teamId) {
         this.controllingTeam = teamId;
+    }
+    updateSafeZone(radius) {
+        this.currentSafeRadius = radius;
     }
 
     draw() {
@@ -121,15 +129,18 @@ export class Map {
         if (this.controlZone) {
             this.drawControlZone();
         }
+        if(this.safeZoneConfig && this.currentSafeRadius > 0) {
+            this.drawSafeZone();
+        }
 
         // Draw walls
         this.walls.forEach(wall => wall.draw());
     }
-    
-drawControlZone() {
+
+    drawControlZone() {
         const ctx = this.ctx;
         const zone = this.controlZone;
-        
+
         // Tính tâm của zone
         const centerX = zone.x + zone.width / 2;
         const centerY = zone.y + zone.height / 2;
@@ -143,18 +154,18 @@ drawControlZone() {
 
         // Xác định màu dựa trên đội chiếm đóng
         let zoneColor, glowColor;
-        if (this.controllingTeam === 1) { 
+        if (this.controllingTeam === 1) {
             zoneColor = 'rgba(231, 76, 60, 0.3)';
             glowColor = 'rgba(231, 76, 60, 0.6)';
-        } else if (this.controllingTeam === 2) { 
+        } else if (this.controllingTeam === 2) {
             zoneColor = 'rgba(52, 152, 219, 0.3)';
             glowColor = 'rgba(52, 152, 219, 0.6)';
-        } else { 
+        } else {
             zoneColor = 'rgba(255, 255, 255, 0.1)';
             glowColor = 'rgba(255, 255, 255, 0.3)';
         }
 
-       
+
         ctx.beginPath();
         ctx.arc(0, 0, radius, 0, Math.PI * 2);
         ctx.fillStyle = zoneColor;
@@ -165,7 +176,7 @@ drawControlZone() {
         ctx.arc(0, 0, radius + pulse, 0, Math.PI * 2);
         ctx.strokeStyle = glowColor;
         ctx.lineWidth = 4;
-        ctx.setLineDash([15, 10]); 
+        ctx.setLineDash([15, 10]);
         ctx.stroke();
         ctx.setLineDash([]);
 
@@ -177,8 +188,34 @@ drawControlZone() {
         ctx.shadowColor = glowColor;
         ctx.shadowBlur = 10;
         ctx.fillText(this.controllingTeam ? '👑' : '⚔️', 0, 0);
-        
+
         ctx.restore();
+    }
+
+    drawSafeZone() {
+        const ctx = this.ctx;
+        const cx = this.safeZoneConfig.centerX;
+        const cy = this.safeZoneConfig.centerY;
+        const r = this.currentSafeRadius;
+        ctx.save();
+
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+        ctx.beginPath();
+
+        ctx.rect(0, 0, this.mapWidth, this.mapHeight);
+        ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(cx,cy,r,0,Math.PI*2);
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#00ffff';
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 20;
+        ctx.stroke();
+        ctx.restore();
+
+
     }
 }
 
