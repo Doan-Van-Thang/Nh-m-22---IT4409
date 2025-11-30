@@ -70,51 +70,68 @@ const UserProfile = ({ auth, onLogout }) => {
 };
 
 // ===== 2. COMPONENT SIDEBAR (LEADERBOARD) (CẬP NHẬT) =====
-// [SỬA] Nhận prop 'leaderboard'
 const Leaderboard = ({ leaderboard }) => {
-
-    // [SỬA] Sử dụng dữ liệu thật từ prop, bỏ mock data
-    const users = leaderboard || []; // Nếu leaderboard chưa có thì dùng mảng rỗng
+    const users = leaderboard || [];
 
     return (
-        <div className="w-full h-full bg-white p-6 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-bold mb-4">Bảng xếp hạng</h2>
+        <div className="w-full h-full bg-white/90 backdrop-blur-sm p-4 md:p-6 rounded-xl shadow-lg border border-white/50 flex flex-col">
+            
+            {/* Header cố định */}
+            <div className="flex-shrink-0 mb-4">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    🏆 Bảng Xếp Hạng
+                </h2>
+                <div className="h-1 w-20 bg-blue-500 rounded mt-2"></div>
+            </div>
 
-            {/* [SỬA] Thêm kiểm tra trạng thái loading/rỗng */}
-            {users.length === 0 ? (
-                <div className="text-gray-500 text-center">Đang tải...</div>
-            ) : (
-                <ul className="space-y-3">
-                    {/* [SỬA] Map qua dữ liệu thật từ server */}
-                    {users.map((user, index) => (
-                        <li key={user._id || index} className="flex items-baseline justify-between p-2 rounded-lg hover:bg-gray-50">                            <div className="flex items-center space-x-3">
-                            <span className="font-bold text-lg">{index + 1}.</span>
+            {/* Danh sách cuộn (flex-1 overflow-y-auto) */}
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0">
+                {users.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-40 text-gray-500 italic">
+                        <span>Đang tải dữ liệu...</span>
+                    </div>
+                ) : (
+                    <ul className="space-y-2">
+                        {users.map((user, index) => (
+                            <li key={user._id || index} className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors border border-transparent hover:border-blue-100 group">
+                                <div className="flex items-center space-x-3 overflow-hidden">
+                                    {/* Top 3 Styling */}
+                                    <div className={`
+                                        flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm
+                                        ${index === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-400' : 
+                                          index === 1 ? 'bg-gray-100 text-gray-700 ring-2 ring-gray-400' : 
+                                          index === 2 ? 'bg-orange-100 text-orange-800 ring-2 ring-orange-400' : 
+                                          'bg-white text-gray-500 border border-gray-200'}
+                                    `}>
+                                        {index + 1}
+                                    </div>
 
-                            {/* [SỬA ĐỔI] Dùng user.avatarUrl, nếu không có thì dùng /avatar.png */}
-                            <img
-                                src={user.avatarUrl || '/avatar.png'}
-                                alt={user.name}
-                                className="w-8 h-8 rounded-full bg-gray-300" // Thêm bg-gray-300
-                            />
-                            <div className="flex flex-col">
-                                <span className="font-medium">{user.name}</span>
-                                {/* Bỏ 'ml-2' vì đã xuống dòng */}
-                                <span className="text-sm text-gray-500">{user.province || '...'}</span>
-                            </div>
-                        </div>
-                            {/* Hiển thị điểm số thật */}
-                            <span className="font-semibold text-blue-600 text-lg">{user.highScore}</span>
-                        </li>
-                    ))}
-                </ul>
-            )}
+                                    <img
+                                        src={user.avatarUrl || '/avatar.png'}
+                                        alt={user.name}
+                                        className="w-10 h-10 rounded-full bg-gray-200 border border-gray-300 object-cover"
+                                    />
+                                    
+                                    <div className="flex flex-col min-w-0">
+                                        {/* Truncate tên nếu quá dài */}
+                                        <span className="font-bold text-gray-800 truncate max-w-[120px]">{user.name}</span>
+                                        <span className="text-xs text-gray-500 truncate">{user.province || 'Ẩn danh'}</span>
+                                    </div>
+                                </div>
+                                <span className="font-mono font-bold text-blue-600 text-sm md:text-base group-hover:scale-110 transition-transform">
+                                    {user.highScore.toLocaleString()}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
 
-            <button className="w-full mt-4 text-blue-500 hover:underline">
-                Nhìn thấy tất cả
-            </button>
-            <div className="mt-6 text-center text-gray-500">
-                Bảng xếp hạng hàng ngày, kết thúc vào
-                <div className="text-3xl font-bold text-black mt-2">00 : 25 : 29</div>
+            {/* Footer cố định */}
+            <div className="flex-shrink-0 mt-4 pt-4 border-t border-gray-100">
+                <button className="w-full py-2 text-sm text-blue-600 font-semibold hover:bg-blue-50 rounded-lg transition-colors">
+                    Xem tất cả
+                </button>
             </div>
         </div>
     );
@@ -194,34 +211,31 @@ const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth, onOpenCreateModal 
 
 export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onLogout, socket, leaderboard }) {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    // State để bật tắt BXH trên mobile
+    const [showMobileLeaderboard, setShowMobileLeaderboard] = useState(false);
 
-    // [MỚI] Thêm useEffect để gửi yêu cầu lấy leaderboard khi component được hiển thị
     useEffect(() => {
-        // Hàm để gửi yêu cầu
         const requestData = () => {
             if (socket) {
                 console.log("Client: Gửi yêu cầu getLeaderboard và getRoomList");
                 socket.send({ type: 'getLeaderboard' });
-                socket.send({ type: 'getRoomList' }); // Lấy danh sách phòng
+                socket.send({ type: 'getRoomList' });
             }
         };
 
-        // Kiểm tra xem socket đã sẵn sàng chưa
         if (socket && socket.socket && socket.socket.readyState === WebSocket.OPEN) {
             requestData();
         } else if (socket) {
-            // Nếu socket chưa mở (ví dụ: F5 trang), đợi sự kiện onOpen
             socket.onOpen(requestData);
         }
-
-        // Không cần cleanup, vì socket được quản lý bởi App.jsx
-    }, [socket]); // Chỉ chạy khi 'socket' prop thay đổi (thường là 1 lần)
+    }, [socket]);
 
     return (
-        <div className="flex h-screen bg-gradient-to-br from-gray-100 via-blue-50 to-purple-50 relative overflow-hidden">
-            {/* Decorative background elements */}
-            <div className="absolute top-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="flex flex-col md:flex-row h-screen bg-gradient-to-br from-gray-100 via-blue-50 to-purple-50 relative overflow-hidden">
+            
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float pointer-events-none"></div>
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-float pointer-events-none" style={{ animationDelay: '2s' }}></div>
 
             <CreateRoomModal
                 isOpen={isCreateModalOpen}
@@ -230,18 +244,31 @@ export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onL
                 userPoints={auth?.highScore || 0}
             />
 
-            {/* === CỘT 1: SIDEBAR === */}
-            <aside className="w-1/4 h-screen p-4 overflow-y-auto relative z-10">
-                {/* [SỬA] Truyền 'leaderboard' xuống component con */}
+            {/* CỘT 1: SIDEBAR (LEADERBOARD) */}
+            <aside className={`
+                md:w-96 flex-shrink-0 p-4 z-20 transition-all duration-300 ease-in-out
+                ${showMobileLeaderboard ? 'h-[60%] block border-b-2 border-gray-200' : 'hidden'} 
+                md:block md:h-screen md:border-r md:border-white/50
+            `}>
                 <Leaderboard leaderboard={leaderboard} />
             </aside>
 
-            {/* === CỘT 2: NỘI DUNG CHÍNH === */}
-            <main className="flex-1 h-screen flex flex-col relative z-10">
-                <header className="flex justify-end w-full">
-                    <UserProfile auth={auth} onLogout={onLogout} />
+            {/*CỘT 2: NỘI DUNG CHÍNH (ROOM LIST) */}
+            <main className="flex-1 flex flex-col relative z-10 h-full overflow-hidden">
+                <header className="flex justify-between items-center p-4 w-full bg-white/50 backdrop-blur-md md:bg-transparent">
+                    <button 
+                        onClick={() => setShowMobileLeaderboard(!showMobileLeaderboard)}
+                        className="md:hidden px-4 py-2 bg-white rounded-xl shadow-md text-blue-600 font-bold border border-blue-100 active:scale-95 transition-transform"
+                    >
+                        {showMobileLeaderboard ? '✕ Đóng BXH' : '🏆 Xem BXH'}
+                    </button>
+
+                    <div className="ml-auto">
+                        <UserProfile auth={auth} onLogout={onLogout} />
+                    </div>
                 </header>
-                <div className="flex-1 p-4 overflow-y-auto">
+
+                <div className="flex-1 p-0 overflow-y-auto custom-scrollbar scroll-smooth">
                     <RoomList
                         onCreateRoom={onCreateRoom}
                         onJoinRoom={onJoinRoom}

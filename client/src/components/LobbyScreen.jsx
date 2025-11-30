@@ -193,7 +193,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                         </div>
                     )}
                     {isHost && (
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 px-4 py-2 rounded-xl border-2 border-green-200 shadow-sm">\n                            <span className="text-xs text-green-700 font-bold">👑 Bạn là chủ phòng</span>
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 px-4 py-2 rounded-xl border-2 border-green-200 shadow-sm">                           <span className="text-xs text-green-700 font-bold">👑 Bạn là chủ phòng</span>
                         </div>
                     )}
                 </div>
