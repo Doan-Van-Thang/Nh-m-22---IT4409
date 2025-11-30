@@ -11,6 +11,9 @@ export class Map {
         this.mapWidth = 0;
         this.mapHeight = 0;
         this.cachedBackgroundGradient = null;
+        this.controlZone = null;
+        this.controllingTeam = null;
+        this.animPulse = 0;
     }
 
     updateMapData(mapData) {
@@ -19,6 +22,8 @@ export class Map {
         this.width = mapData.width;
         this.height = mapData.height;
         this.obstacles = mapData.obstacles; // Store for mini-map
+
+        this.controlZone = mapData.controlZone;
 
         // Cache background gradient for performance
         this.cachedBackgroundGradient = this.ctx.createRadialGradient(
@@ -35,6 +40,9 @@ export class Map {
                 new Wall(this.ctx, obs.x, obs.y, obs.width, obs.height, 'brown')
             );
         });
+    }
+    setControllingTeam(teamId) {
+        this.controllingTeam = teamId;
     }
 
     draw() {
@@ -110,8 +118,67 @@ export class Map {
             ctx.lineWidth = 3;
             ctx.strokeRect(0, 0, this.mapWidth, this.mapHeight);
         }
+        if (this.controlZone) {
+            this.drawControlZone();
+        }
 
         // Draw walls
         this.walls.forEach(wall => wall.draw());
     }
+    
+drawControlZone() {
+        const ctx = this.ctx;
+        const zone = this.controlZone;
+        
+        // Tính tâm của zone
+        const centerX = zone.x + zone.width / 2;
+        const centerY = zone.y + zone.height / 2;
+        const radius = zone.captureRadius || 250;
+
+        this.animPulse += 0.05;
+        const pulse = Math.sin(this.animPulse) * 10;
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+
+        // Xác định màu dựa trên đội chiếm đóng
+        let zoneColor, glowColor;
+        if (this.controllingTeam === 1) { 
+            zoneColor = 'rgba(231, 76, 60, 0.3)';
+            glowColor = 'rgba(231, 76, 60, 0.6)';
+        } else if (this.controllingTeam === 2) { 
+            zoneColor = 'rgba(52, 152, 219, 0.3)';
+            glowColor = 'rgba(52, 152, 219, 0.6)';
+        } else { 
+            zoneColor = 'rgba(255, 255, 255, 0.1)';
+            glowColor = 'rgba(255, 255, 255, 0.3)';
+        }
+
+       
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.fillStyle = zoneColor;
+        ctx.fill();
+
+        // Vẽ viền phát sáng (Pulse effect)
+        ctx.beginPath();
+        ctx.arc(0, 0, radius + pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 4;
+        ctx.setLineDash([15, 10]); 
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Vẽ biểu tượng Vương miện 
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 40px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 10;
+        ctx.fillText(this.controllingTeam ? '👑' : '⚔️', 0, 0);
+        
+        ctx.restore();
+    }
 }
+

@@ -83,6 +83,10 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                         team1Kills = modeState.captures ? modeState.captures[1] : 0;
                         team2Kills = modeState.captures ? modeState.captures[2] : 0;
                     }
+                    else if ( game.gameMode === 'kingOfHill' ) {
+                        team1Kills = modeState.teamScores ? modeState.teamScores[1] : 0;
+                        team2Kills = modeState.teamScores ? modeState.teamScores[2] : 0;
+                    }
 
                     else if (isTeamMode) {
                         game.tanks.forEach(tank => {
@@ -210,11 +214,13 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                 <div className="text-red-400 font-bold text-2xl flex items-center justify-center gap-2">
                     {/* Nếu là Cướp Cờ thì hiện icon Cờ */}
                     {gameStats.gameMode === 'captureFlag' && <span className="text-xl">🚩</span>}
-                    {gameStats.teamScore.team1}
+                    {gameStats.gameMode === 'kingOfHill' && <span className="text-xl">👑</span>}
+                    {Math.floor(gameStats.teamScore.team1)}
                 </div>
                 <div className="text-xs text-gray-400 font-bold tracking-wider">
                     {/* Đổi chữ RED TEAM thành CAPTURES nếu là chế độ cờ */}
-                    {gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'RED TEAM'}
+                    {gameStats.gameMode === 'kingOfHill' ? '/ 1000 PTS' : 
+                 gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'RED TEAM'}
                 </div>
             </div>
 
@@ -224,11 +230,13 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
             {/* ĐỘI XANH */}
             <div className="text-center">
                 <div className="text-blue-400 font-bold text-2xl flex items-center justify-center gap-2">
-                    {gameStats.teamScore.team2}
+                    {Math.floor(gameStats.teamScore.team2)}
                     {gameStats.gameMode === 'captureFlag' && <span className="text-xl">🚩</span>}
+                    {gameStats.gameMode === 'kingOfHill' && <span className="text-xl">👑</span>}
                 </div>
                 <div className="text-xs text-gray-400 font-bold tracking-wider">
-                    {gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'BLUE TEAM'}
+                    {gameStats.gameMode === 'kingOfHill' ? '/ 1000 PTS' : 
+                 gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'BLUE TEAM'}
                 </div>
             </div>
         </div>

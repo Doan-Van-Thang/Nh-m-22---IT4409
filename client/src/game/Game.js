@@ -141,6 +141,10 @@ export class Game {
                 this.modeState = modeState;
             }
 
+            if(modeState && this.map) {
+                this.map.setControllingTeam(modeState.controllingTeam);
+            }
+
             if (flags) {
                 flags.forEach(flagState => {
                     if (!this.flags.has(flagState.id)) {
