@@ -9,10 +9,10 @@ export default class PlayerManager {
         this.players = new Map();
     }
 
-    addPlayer(playerId, teamId) {
+    addPlayer(playerId, teamId,name) {
 
         const spawn = this.world.getSpawnPoint(teamId);//Hồi sinh về đúng đội
-        const player = new User(playerId, spawn.x, spawn.y, teamId);
+        const player = new User(playerId, spawn.x, spawn.y, teamId, name);
         this.players.set(playerId, player);
         return player;
     }

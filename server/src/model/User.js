@@ -2,7 +2,7 @@
 import { collides } from './utils.js';
 
 export default class User {
-    constructor(id, x, y, teamId) {
+    constructor(id, x, y, teamId, name) {
         this.id = id;
         this.teamId = teamId;
         this.x = x;
@@ -19,6 +19,7 @@ export default class User {
         this.speed = 0.5;
         this.baseSpeed = 0.5;
         this.deathTime = 0;
+        this.name = name || "Unknown";
 
         // Power-up effects
         this.activeEffects = {

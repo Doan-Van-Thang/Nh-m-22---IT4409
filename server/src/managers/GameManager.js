@@ -20,7 +20,7 @@ export default class GameManager {
         // Thêm người chơi từ phòng vào GameEngine
         for (const playerInfo of room.players.values()) {
             // Sửa đổi addPlayer trong PlayerManager để nhận teamId
-            const player = gameEngine.playerManager.addPlayer(playerInfo.id, playerInfo.teamId);
+            const player = gameEngine.playerManager.addPlayer(playerInfo.id, playerInfo.teamId,playerInfo.name);
             gameEngine.playerManager.handleActivate(player.id);
 
             // THÊM ĐOẠN NÀY: Gửi 'initialSetup' cho từng người

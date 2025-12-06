@@ -66,7 +66,10 @@ export default class BulletManager {
 
                 // 2. Bỏ qua nếu đạn là của chính người chơi đó
                 if (bullet.playerId === player.id) continue;
-                // 3.Kiểm tra đạn bắn 
+                // 3.Kiểm tra đạn bắn đồng đội
+                if (shooter && shooter.teamId && player.teamId && shooter.teamId === player.teamId) {
+                    continue; 
+                }
 
                 // 3. Kiểm tra va chạm
                 if (collides(bullet, player)) {

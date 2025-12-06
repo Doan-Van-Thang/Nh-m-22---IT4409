@@ -337,7 +337,9 @@ export default class GameEngine {
             console.log(`GAME OVER! Team ${winner} wins by ${reason}`);
         } else if (typeof winner === 'string') {
             // Player win (FFA)
-            winnerInfo = { type: 'player', playerId: winner };
+            const playerObj = this.playerManager.players.get(winner);
+            const playerName = playerObj ? playerObj.name : 'winner';
+            winnerInfo = { type: 'player', playerId: winner, playerName: playerName };
             console.log(`GAME OVER! Player ${winner} wins by ${reason}`);
         } else {
             // Time limit or draw
@@ -355,7 +357,9 @@ export default class GameEngine {
                         winnerId = playerId;
                     }
                 }
-                winnerInfo = { type: 'player', playerId: winnerId };
+                const playerObj = this.playerManager.players.get(winnerId);
+                const playerName = playerObj ? playerObj.name : (winnerId || "Unknown");
+                winnerInfo = { type: 'player', playerId: winnerId, playerName: playerName };
                 console.log(`GAME OVER! Player ${winnerId} wins by score`);
             }
         }

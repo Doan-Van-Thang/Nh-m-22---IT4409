@@ -64,6 +64,13 @@ export class InputHandler {
             this.inputState.right = true;
             changed = true;
         }
+        if(e.code === 'Space') {
+            if(!this.inputState.shooting) {
+                this.inputState.justClicked = true;
+            }
+            this.inputState.shooting = true;
+            changed = true;
+        }
 
         if (changed) {
             this.inputStateChanged = true;
@@ -87,6 +94,10 @@ export class InputHandler {
         }
         if ((e.key === 'd' || e.key === 'ArrowRight') && this.inputState.right) {
             this.inputState.right = false;
+            changed = true;
+        }
+        if (e.code === 'Space') {
+            this.inputState.shooting = false; 
             changed = true;
         }
         if (changed) {

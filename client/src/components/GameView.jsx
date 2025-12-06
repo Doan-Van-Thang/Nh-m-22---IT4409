@@ -180,7 +180,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                                         Team {winner.teamId === 1 ? 'RED' : 'BLUE'} Wins!
                                     </span>
                                 ) : (
-                                    <span className="text-green-400">Player {winner.playerId} Wins!</span>
+                                    <span className="text-green-400">Player {winner.playerName || winner.playerId} Wins!</span>
                                 )}
                             </div>
                         )}
