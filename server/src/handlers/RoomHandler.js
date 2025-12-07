@@ -34,31 +34,33 @@ export default class RoomHandler {
                 case 'joinRoom': {
                     const joinedRoom = this.roomManager.handleJoinRoom(data.roomId, player);
                     ws.send(JSON.stringify({ type: 'joinRoomSuccess', room: joinedRoom.getState() }));
-                    
+
                     // Báo cho người khác trong phòng
                     this.networkManager.broadcastToRoom(joinedRoom.id, {
                         type: 'roomUpdate',
                         room: joinedRoom.getState()
                     }, ws);
-                    
+
                     this.networkManager.broadcastRoomList();
                     break;
                 }
 
                 case 'leaveRoom': {
                     const currentRoomId = this.roomManager.playerToRoom.get(player.id);
-                    this.roomManager.handleLeaveRoom(player.id);
-                    
-                    ws.send(JSON.stringify({ type: 'leaveRoomSuccess' }));
-                    this.networkManager.broadcastRoomList();
+                    const room = this.roomManager.rooms.get(currentRoomId);
+                    if (room) {
+                        if (room.status === 'in-game') {
+                            this.networkManager.gameManager.removePlayerFromGame(currentRoomId, player.id);
+                        }
+                        this.roomManager.handleLeaveRoom(player.id);
+                        ws.send(JSON.stringify({ type: 'leaveRoomSuccess' }));
+                        this.networkManager.broadcastRoomList();
 
-                    // Nếu phòng vẫn còn, báo cho người ở lại
-                    if (currentRoomId) {
-                        const currentRoom = this.roomManager.rooms.get(currentRoomId);
-                        if (currentRoom) {
-                            this.networkManager.broadcastToRoom(currentRoomId, {
+                        if (this.roomManager.rooms.has(currentRoomId)) {
+                             const updatedRoom = this.roomManager.rooms.get(currentRoomId);
+                             this.networkManager.broadcastToRoom(currentRoomId, {
                                 type: 'roomUpdate',
-                                room: currentRoom.getState()
+                                room: updatedRoom.getState()
                             });
                         }
                     }
@@ -102,13 +104,13 @@ export default class RoomHandler {
                     await this.roomManager.handleStartGame(roomId, player.id);
                     break;
                 }
-                
+
                 case 'syncRoomState': {
                     // Logic reload trang web
                     if (data.roomId) {
                         const room = this.roomManager.rooms.get(data.roomId);
                         if (room && room.players.has(player.id)) {
-                             const response = {
+                            const response = {
                                 type: 'roomStateSync',
                                 room: room.getState(),
                                 playerSetup: { playerId: player.id, teamId: room.players.get(player.id).teamId }

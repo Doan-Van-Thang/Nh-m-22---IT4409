@@ -84,10 +84,14 @@ export default class NetworkManager {
             // Logic giữ kết nối 30s
             const roomId = this.roomManager.playerToRoom.get(player.id);
             if (roomId) {
+                const room = this.roomManager.rooms.get(roomId);
                 // Nếu đang trong phòng, set timeout để kick sau 30s nếu ko quay lại
                 setTimeout(() => {
                     const isReconnected = Array.from(this.clients.values()).some(p => p.id === player.id);
                     if (!isReconnected) {
+                        if (room && room.status === 'in-game') {
+                            this.gameManager.removePlayerFromGame(roomId, player.id);
+                        }
                         this.roomManager.handleLeaveRoom(player.id);
                         this.broadcastRoomList();
                     }

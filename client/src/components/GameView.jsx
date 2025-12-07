@@ -147,6 +147,16 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         };
     }, [socket, navigateTo, SCREENS, initialMapData, initialPlayerSetup, initialGameState, toast]); // [SỬA] Thêm socket vào dependency
 
+    const handleLeaveGame = () => {
+        if (confirm("Bạn có chắc chắn muốn rời trận đấu?")) {
+            socket.send({ type: 'leaveRoom' });
+
+            if (gameInstanceRef.current) {
+                gameInstanceRef.current.stop();
+            }
+        }
+    };
+
     return (
         <div className="relative w-screen h-screen overflow-hidden bg-black">
             <canvas id="gameCanvas" ref={canvasRef} className="absolute inset-0" />
@@ -191,7 +201,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                 </div>
             )}
 
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-4 pointer-events-none">
                 <div className={`px-5 py-2 rounded-xl border-2 font-mono font-bold text-3xl backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.5)] flex items-center gap-3 transition-all duration-300
                     ${gameStats.timeRemaining < 30
                         ? 'bg-red-900/60 border-red-500 text-red-100 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]'
@@ -200,6 +210,14 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                     <span className="text-2xl">⏱️</span>
                     <span>{formatTime(gameStats.timeRemaining)}</span>
                 </div>
+                <button
+                    onClick={handleLeaveGame}
+                    className="pointer-events-auto bg-red-600/80 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl border-2 border-red-400 shadow-lg backdrop-blur-sm transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 h-full"
+                    title="Rời trận đấu"
+                >
+                    <span>🚪</span>
+                    <span className="hidden md:inline">Thoát</span>
+                </button>
             </div>
 
             {/* HUD Overlay */}

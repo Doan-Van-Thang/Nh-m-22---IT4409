@@ -66,6 +66,7 @@ export default class GameManager {
             if (room) {
                 room.status = 'waiting';
                 console.log(`[GameManager] Đã reset trạng thái phòng ${roomId} về 'waiting'.`);
+                this.networkManager.broadcastRoomList();
             }
         }
     }
@@ -87,6 +88,13 @@ export default class GameManager {
                     playerManager.handleFire(playerId);
                     break;
             }
+        }
+    }
+    removePlayerFromGame(roomId, playerId) {
+        const game = this.activeGames.get(roomId);
+        if (game) {
+            game.removePlayer(playerId);
+            console.log(`[GameManager] Đã xóa người chơi ${playerId} khỏi game ${roomId}`);
         }
     }
 }

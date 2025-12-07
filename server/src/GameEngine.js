@@ -243,6 +243,44 @@ export default class GameEngine {
         flag.y = flag.homeY;
         flag.carrierId = null;
     }
+    removePlayer(playerId) {
+        if (this.playerManager) {
+            this.playerManager.removePlayer(playerId);
+            this.playerScores.delete(playerId);
+            this.checkWinConditionsOnDisconnect();
+        }
+    }
+    checkWinConditionsOnDisconnect(){
+        const remainingPlayers = this.playerManager.getAllPlayers();
+        if(this.modeConfig.teams){
+            const team1Count = remainingPlayers.filter(p => p.teamId === 1).length;
+            const team2Count = remainingPlayers.filter(p => p.teamId === 2).length;
+            if(team1Count === 0 && team2Count > 0){
+                this.endGame(2,'enemyRemoved');
+                return;
+            } else if (team2Count === 0 && team1Count > 0){
+                this.endGame(1,'enemyRemoved');
+                return;
+            } else if (team1Count === 0 && team2Count === 0){
+                this.endGame(null,'allDisconnected');
+                return;
+            }
+        
+        }
+        else {
+            if (remainingPlayers.length === 1) {
+                const winner = remainingPlayers[0];
+                this.endGame(winner.id, 'lastManStanding');
+                return;
+            }
+            if (remainingPlayers.length === 0) {
+                this.endGame(null, 'allDisconnected');
+                return;
+            }
+        }
+
+
+    }
 
     checkWinConditions() {
         const conditions = this.modeConfig.winConditions;
