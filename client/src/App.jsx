@@ -126,9 +126,18 @@ function AppContent() {
                     break;
 
                 case MESSAGE_TYPES.JOIN_ROOM_SUCCESS:
-                case MESSAGE_TYPES.ROOM_UPDATE:
                     setCurrentRoom(data.room);
                     setScreen(SCREENS.LOBBY);
+                    break;
+                case MESSAGE_TYPES.ROOM_UPDATE:
+                    // Chỉ cập nhật phòng và chuyển màn hình NẾU người dùng đã đăng nhập
+                    if (isAuthenticated) {
+                        setCurrentRoom(data.room);
+                        // Chỉ chuyển sang Lobby nếu đang không ở trong Game
+                        if (screen !== SCREENS.GAME) {
+                            setScreen(SCREENS.LOBBY);
+                        }
+                    }
                     break;
 
                 case MESSAGE_TYPES.LEAVE_ROOM_SUCCESS:

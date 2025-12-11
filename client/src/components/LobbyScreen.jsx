@@ -76,12 +76,12 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     useEffect(() => {
-        if (!room) {
+        if (!room || !auth) {
             navigateTo(SCREENS.MAIN_MENU);
         }
-    }, [room, navigateTo, SCREENS]);
+    }, [room, auth, navigateTo, SCREENS]);
 
-    if (!room) return null;
+    if (!room || !auth) return null;
 
     const modeInfo = getGameModeInfo(room.gameMode);
     const isTeamMode = modeInfo.teams;
@@ -201,9 +201,9 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
 
             {/* Khu vực chia đội (Grid layout) */}
             <div className={`w-full max-w-6xl mb-8 flex-1 relative z-10 animate-fade-in-up 
-                ${isTeamMode 
-                    ? 'grid grid-cols-1 md:grid-cols-2 gap-6' 
-                    : 'flex justify-center items-start'     
+                ${isTeamMode
+                    ? 'grid grid-cols-1 md:grid-cols-2 gap-6'
+                    : 'flex justify-center items-start'
                 }`}>
                 {isTeamMode ? (
                     <>
@@ -233,7 +233,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                             players={room.players}
                             currentUserId={auth.id}
                             hostId={room.hostId}
-                            onJoin={() => {}} 
+                            onJoin={() => { }}
                             isTeamMode={false} // Ẩn nút join
                         />
                     </div>
@@ -253,7 +253,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                 {isHost ? (
                     <button
                         onClick={handleStartGame}
-                        disabled={isTeamMode 
+                        disabled={isTeamMode
                             ? !(team1Players.length > 0 && team2Players.length > 0)
                             : room.players.length < 2 // Ít nhất 2 người cho FFA (có thể sửa thành < 1 để test mình)
                         }
@@ -264,7 +264,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                                 ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105 animate-pulse-glow'
                                 : 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed opacity-60'
                             }`}
-                        
+
                     >
                         🚀 BẮT ĐẦU TRẬN ĐẤU
                     </button>

@@ -18,10 +18,26 @@ export const STORAGE_KEYS = {
 };
 
 // WebSocket URL configuration
-// Auto-detect: Use localhost for local play, or current hostname for network play
-const WS_HOST = import.meta.env.VITE_WS_HOST || window.location.hostname;
-const WS_PORT = import.meta.env.VITE_WS_PORT || '5174';
-export const SOCKET_URL = `ws://${WS_HOST}:${WS_PORT}`;
+// 1. Tự động xác định giao thức: HTTPS thì dùng WSS, HTTP thì dùng WS
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+// 2. Lấy Host: Ưu tiên config, nếu không có thì lấy hostname hiện tại
+const host = import.meta.env.VITE_WS_HOST || window.location.hostname;
+
+// 3. Xử lý Port:
+// - Nếu có cấu hình VITE_WS_PORT trong .env -> Dùng port đó
+// - Nếu đang chạy HTTPS (Production) -> KHÔNG dùng port (để Nginx lo qua cổng 443)
+// - Nếu đang chạy HTTP (Localhost) -> Mặc định dùng :5174
+const portEnv = import.meta.env.VITE_WS_PORT;
+let port = '';
+
+if (portEnv) {
+    port = `:${portEnv}`;
+} else if (window.location.protocol !== 'https:') {
+    port = ':5174';
+}
+
+export const SOCKET_URL = `${protocol}//${host}${port}`;
 
 console.log(`[Config] WebSocket URL: ${SOCKET_URL}`);
 
