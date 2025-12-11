@@ -37,7 +37,7 @@ if (portEnv) {
     port = ':5174';
 }
 
-export const SOCKET_URL = `${protocol}//${host}${port}`;
+export const SOCKET_URL = `${protocol}//${host}${port}/socket`;
 
 console.log(`[Config] WebSocket URL: ${SOCKET_URL}`);
 
