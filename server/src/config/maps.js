@@ -156,10 +156,10 @@ export const MAPS = {
         },
         obstacles: [
             // Hill walls (around control zone)
-            { x: 600, y: 600, width: 50, height: 400 },
-            { x: 950, y: 600, width: 50, height: 400 },
-            { x: 650, y: 600, width: 300, height: 50 },
-            { x: 650, y: 950, width: 300, height: 50 },
+            { x: 650, y: 650, width: 50, height: 50 },
+            { x: 900, y: 650, width: 50, height: 50 },
+            { x: 650, y: 900, width: 50, height: 50 },
+            { x: 900, y: 900, width: 50, height: 50 },
 
             // Entrance gaps
             { x: 750, y: 600, width: 100, height: 50 }, // Top entrance
