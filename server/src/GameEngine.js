@@ -78,22 +78,21 @@ export default class GameEngine {
             console.log(`[GameEngine] Đã dừng vòng lặp game ${this.roomId}.`);
         }
     }
-
     loop() {
         if (this.gameState === "game_over") return;
 
-        // Update managers
+        // Cập nhật logic game
         this.playerManager.update();
         this.bulletManager.update(this.playerManager);
         this.powerUpManager.update(this.playerManager);
 
-        // Mode-specific updates
+        // Cập nhật logic theo chế độ chơi
         this.updateModeLogic();
 
-        // Check win conditions
+        // Kiểm tra thắng thua
         this.checkWinConditions();
 
-        // Broadcast state
+        // Gửi dữ liệu đi
         if (this.networkManager) {
             this.networkManager.broadcastGameState(this.roomId, this.getGameState());
         }

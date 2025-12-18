@@ -1,3 +1,4 @@
+import { isValidGameMode } from '../config/gameModes.js';
 export default class RoomHandler {
     constructor(roomManager, networkManager) {
         this.roomManager = roomManager;
@@ -19,11 +20,36 @@ export default class RoomHandler {
                     break;
 
                 case 'createRoom': {
+                    // Cắt khoảng trắng, giới hạn độ dài 20 ký tự, nếu rỗng thì lấy tên mặc định
+                    const rawName = data.name ? data.name.trim() : "";
+                    const safeName = rawName.substring(0, 20) || `Phòng của ${player.name}`;
+
+                    // Validate Max Players 
+                    let safeMaxPlayers = parseInt(data.maxPlayers);
+                    if (isNaN(safeMaxPlayers)) safeMaxPlayers = 4; 
+                    safeMaxPlayers = Math.max(2, Math.min(safeMaxPlayers, 10)); 
+
+                    // Validate Betting Points 
+                    let safeBettingPoints = parseInt(data.bettingPoints);
+                    if (isNaN(safeBettingPoints)) safeBettingPoints = 0;
+                    safeBettingPoints = Math.max(0, safeBettingPoints); 
+                    
+                    // Kiểm tra xem người chơi có đủ tiền cược không ngay tại đây 
+                    if (safeBettingPoints > 0 && player.highScore < safeBettingPoints) {
+                        ws.send(JSON.stringify({ type: 'error', message: "Bạn không đủ điểm để tạo phòng cược này!" }));
+                        return;
+                    }
+
+                    // Validate Game Mode
+                    if (!isValidGameMode(data.gameMode)) {
+                        ws.send(JSON.stringify({ type: 'error', message: "Chế độ chơi không hợp lệ!" }));
+                        return;
+                    }
                     const roomConfig = {
-                        name: data.name,
+                        name: safeName,
                         gameMode: data.gameMode,
-                        maxPlayers: data.maxPlayers,
-                        bettingPoints: data.bettingPoints
+                        maxPlayers: safeMaxPlayers,
+                        bettingPoints: safeBettingPoints
                     };
                     const newRoom = this.roomManager.handleCreateRoom(player, roomConfig);
                     ws.send(JSON.stringify({ type: 'joinRoomSuccess', room: newRoom.getState() }));
@@ -71,6 +97,10 @@ export default class RoomHandler {
                     const roomId = this.roomManager.playerToRoom.get(player.id);
                     const room = this.roomManager.rooms.get(roomId);
                     if (room) {
+                        if (room.status === 'in-game') {
+                            ws.send(JSON.stringify({ type: 'error', message: "Không thể đổi đội khi trận đấu đang diễn ra!" }));
+                            return;
+                        }
                         room.switchPlayerTeam(player.id, data.teamId);
                         this.networkManager.broadcastToRoom(roomId, {
                             type: 'roomUpdate',
@@ -84,10 +114,25 @@ export default class RoomHandler {
                     const roomId = this.roomManager.playerToRoom.get(player.id);
                     const room = this.roomManager.rooms.get(roomId);
                     if (room && room.hostId === player.id) {
+                        if (room.status === 'in-game') {
+                             ws.send(JSON.stringify({ type: 'error', message: "Không thể thay đổi cài đặt khi trận đấu đang diễn ra!" }));
+                             return;
+                        }
+                        // Validate maxPlayers update
+                        let safeMaxPlayers = parseInt(data.maxPlayers);
+                        if (!isNaN(safeMaxPlayers)) {
+                             safeMaxPlayers = Math.max(2, Math.min(safeMaxPlayers, 10));
+                        }
+
+                         // Validate bettingPoints update
+                        let safeBettingPoints = parseInt(data.bettingPoints);
+                        if (!isNaN(safeBettingPoints)) {
+                            safeBettingPoints = Math.max(0, safeBettingPoints);
+                        }
                         room.updateSettings({
                             gameMode: data.gameMode,
-                            maxPlayers: data.maxPlayers,
-                            bettingPoints: data.bettingPoints
+                            maxPlayers: safeMaxPlayers,
+                            bettingPoints: safeBettingPoints
                         });
                         this.networkManager.broadcastToRoom(roomId, {
                             type: 'roomUpdate',
