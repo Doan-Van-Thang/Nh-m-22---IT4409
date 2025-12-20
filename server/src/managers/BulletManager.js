@@ -38,9 +38,10 @@ export default class BulletManager {
                 this.bullets.delete(id);
                 return;
             }
+            const nearbyObstacles = this.world.getNearbyObstacles(bullet.x, bullet.y);
 
             // Kiểm tra va chạm vật cản (như cũ)
-            for (const obs of obstacles) {
+            for (const obs of nearbyObstacles) {
                 if (collides(bullet, obs)) {
                     if (obs.teamId && obs.health !== undefined) {
                         if (shooter.teamId === obs.teamId) {
@@ -74,14 +75,13 @@ export default class BulletManager {
                 // 3. Kiểm tra va chạm
                 if (collides(bullet, player)) {
                     // Có va chạm!
-                    player.takeDamage(bullet.damage); // Use bullet's damage value
+                    player.takeDamage(bullet.damage); 
 
                     // Xóa viên đạn
                     this.bullets.delete(id);
 
                     // Kiểm tra xem người chơi có chết không
                     if (player.isDead()) {
-                        // Record death for killed player
                         player.recordDeath();
 
                         if (shooter) {
@@ -94,7 +94,6 @@ export default class BulletManager {
                         player.deathTime = Date.now();
                     }
 
-                    // Vì đạn đã nổ, không cần kiểm tra tiếp
                     return;
                 }
             }
