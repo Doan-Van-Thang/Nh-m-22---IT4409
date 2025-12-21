@@ -126,6 +126,7 @@ export default class PlayerManager {
             return {
                 id: p.id,
                 teamId: p.teamId,
+                name:p.name,
                 x: p.x,
                 y: p.y,
                 rotation: p.rotation,

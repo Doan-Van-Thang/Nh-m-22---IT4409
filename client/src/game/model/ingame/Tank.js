@@ -14,6 +14,7 @@ export class Tank {
             kills: 0,
             deaths: 0,
             score: 0,
+            name: "",
             activeEffects: {
                 rapidFire: false,
                 shield: false,
@@ -37,6 +38,7 @@ export class Tank {
         this.state.deaths = serverState.deaths || 0;
         this.state.score = serverState.score || 0;
         this.state.activeEffects = serverState.activeEffects || this.state.activeEffects;
+        this.state.name = serverState.name || "Unknown";
     }
 
     draw() {
@@ -216,6 +218,7 @@ export class Tank {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight * 0.4);
         }
+        this.drawName();
 
         // Draw effect indicators
         this.drawEffectIndicators(x, y, radius, activeEffects);
@@ -319,5 +322,24 @@ export class Tank {
         });
 
         ctx.shadowBlur = 0;
+    }
+
+    drawName(){
+        const {x,y,radius,name,teamId} = this.state;
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+
+        const nameY = y-radius-25;
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+        ctx.strokeText(name,x,nameY);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(name,x,nameY);
+        ctx.restore();
     }
 }
