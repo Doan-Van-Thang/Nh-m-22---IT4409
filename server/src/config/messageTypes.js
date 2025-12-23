@@ -44,6 +44,8 @@ export const MESSAGE_TYPES = {
     // Errors
     ERROR: 'error',
     LOBBY_ERROR: 'lobbyError',
+    CHAT_MESSAGE: 'chatMessage',
+    CHAT_BROADCAST: 'chatBroadcast',
 };
 
 export default MESSAGE_TYPES;

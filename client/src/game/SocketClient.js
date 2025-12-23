@@ -11,8 +11,6 @@ export class SocketClient {
 
     connect() {
         console.log(`Đang kết nối tới ${this.url}...`);
-        // Giả sử server của bạn chạy ở localhost:8080 (cổng mặc định)
-        // Nếu khác, bạn của bạn cần cung cấp địa chỉ
         this.socket = new WebSocket(this.url);
 
         this.socket.onopen = () => {
@@ -49,6 +47,10 @@ export class SocketClient {
     // Hàm để Game.js đăng ký lắng nghe tin nhắn
     addMessageListener(callback) {
         this.messageListeners.push(callback);
+        return () => {
+            this.messageListeners = this.messageListeners.filter(listener => listener !== callback);
+            console.log("SocketClient: Đã gỡ bỏ một listener."); 
+        };
     }
 
     // Hàm để gửi dữ liệu đi (dưới dạng JSON)

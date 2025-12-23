@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import PlayerCard from './PlayerCard';
 import RoomSettingsEditor from './RoomSettingsEditor';
 import { getGameModeInfo } from '../config/gameModes';
+import ChatBox from './ChatBox'; 
 
-// Component hiển thị cột cho từng đội 
 const TeamColumn = ({
     teamName,
-    teamColor, // 'red' hoặc 'blue'
+    teamColor,
     players,
     currentUserId,
     onJoin,
@@ -15,7 +15,7 @@ const TeamColumn = ({
 }) => {
     const isMyTeam = players.find(p => p.id === currentUserId);
 
-    // Cấu hình màu sắc dựa trên teamColor
+     // Cấu hình màu sắc dựa trên teamColor
     const colors = {
         red: {
             bg: 'bg-red-100', border: 'border-red-400', title: 'text-red-700',
@@ -27,17 +27,17 @@ const TeamColumn = ({
         },
         purple: {
             bg: 'bg-purple-100', border: 'border-purple-400', title: 'text-purple-700',
-            btn: 'hidden', myTeamBg: 'bg-purple-200', myTeamText: 'text-purple-700' // btn hidden vì không cần nút join
+            btn: 'hidden', myTeamBg: 'bg-purple-200', myTeamText: 'text-purple-700'
         }
     }[teamColor];
 
     return (
-        <div className={`${colors.bg} rounded-xl p-4 border-4 ${colors.border} flex flex-col shadow-xl relative transition-all duration-300`}>
+        <div className={`${colors.bg} rounded-xl p-4 border-4 ${colors.border} flex flex-col shadow-xl relative transition-all duration-300 h-full`}>
             <h2 className={`text-2xl font-bold ${colors.title} text-center mb-4 uppercase tracking-wider`}>
                 {teamName} ({players.length})
             </h2>
 
-            <div className="flex-1 space-y-2 min-h-[200px]">
+            <div className="flex-1 space-y-2 min-h-[200px] overflow-y-auto custom-scrollbar pr-1">
                 {players.map(p => (
                     <PlayerCard
                         key={p.id}
@@ -75,6 +75,7 @@ const TeamColumn = ({
 function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+    //Logic Effect & Check Auth
     useEffect(() => {
         if (!room || !auth) {
             navigateTo(SCREENS.MAIN_MENU);
@@ -83,13 +84,14 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
 
     if (!room || !auth) return null;
 
+    //Logic tính toán biến số
     const modeInfo = getGameModeInfo(room.gameMode);
     const isTeamMode = modeInfo.teams;
-
     const isHost = auth.id === room.hostId;
     const team1Players = room.players.filter(p => p.teamId === 1);
     const team2Players = room.players.filter(p => p.teamId === 2);
 
+    //Các hàm xử lý
     const handleStartGame = () => {
         if (isTeamMode) {
             if (team1Players.length === 0 || team2Players.length === 0) {
@@ -110,7 +112,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
     };
 
     const handleSwitchTeam = (teamId) => {
-        if (!isTeamMode) return; // Không cho chuyển đội nếu không phải chế độ đội
+        if (!isTeamMode) return;
         socket.send({ type: 'switchTeam', teamId: teamId });
     };
 
@@ -123,8 +125,8 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
     };
 
     return (
+        //Background Gradient & Animated Elements
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 flex flex-col items-center relative overflow-hidden">
-            {/* Animated background elements */}
             <div className="absolute top-0 left-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl animate-float"></div>
             <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
             <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
@@ -137,8 +139,8 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                 userPoints={auth?.highScore || 0}
             />
 
-            {/* Header Phòng */}
-            <div className="bg-gradient-to-br from-white to-gray-50 w-full max-w-4xl p-6 rounded-2xl shadow-2xl mb-6 animate-fade-in-down border-2 border-white/20 relative z-10">
+            {/*Header Phòng */}
+            <div className="bg-gradient-to-br from-white to-gray-50 w-full max-w-7xl p-6 rounded-2xl shadow-2xl mb-6 animate-fade-in-down border-2 border-white/20 relative z-10">
                 <div className="flex justify-between items-start mb-4">
                     <div>
                         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2">
@@ -172,7 +174,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                     </div>
                 </div>
 
-                {/* Room Settings Info */}
+                {/*Room Settings Info */}
                 <div className="flex flex-wrap gap-3 pt-4 border-t-2 border-gray-200">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 px-4 py-2 rounded-xl border-2 border-blue-200 shadow-sm">
                         <span className="text-xs text-blue-600 font-bold block">Chế độ</span>
@@ -193,86 +195,91 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                         </div>
                     )}
                     {isHost && (
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 px-4 py-2 rounded-xl border-2 border-green-200 shadow-sm">                           <span className="text-xs text-green-700 font-bold">👑 Bạn là chủ phòng</span>
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 px-4 py-2 rounded-xl border-2 border-green-200 shadow-sm">
+                            <span className="text-xs text-green-700 font-bold">👑 Bạn là chủ phòng</span>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Khu vực chia đội (Grid layout) */}
-            <div className={`w-full max-w-6xl mb-8 flex-1 relative z-10 animate-fade-in-up 
-                ${isTeamMode
-                    ? 'grid grid-cols-1 md:grid-cols-2 gap-6'
-                    : 'flex justify-center items-start'
-                }`}>
-                {isTeamMode ? (
-                    <>
-                        <TeamColumn
-                            teamName="Đội Đỏ"
-                            teamColor="red"
-                            players={team1Players}
-                            currentUserId={auth.id}
-                            hostId={room.hostId}
-                            onJoin={() => handleSwitchTeam(1)}
-                        />
-
-                        <TeamColumn
-                            teamName="Đội Xanh"
-                            teamColor="blue"
-                            players={team2Players}
-                            currentUserId={auth.id}
-                            hostId={room.hostId}
-                            onJoin={() => handleSwitchTeam(2)}
-                        />
-                    </>
-                ) : (
-                    <div className="w-full max-w-3xl">
-                        <TeamColumn
-                            teamName="Danh Sách Chiến Binh"
-                            teamColor="purple"
-                            players={room.players}
-                            currentUserId={auth.id}
-                            hostId={room.hostId}
-                            onJoin={() => { }}
-                            isTeamMode={false} // Ẩn nút join
-                        />
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 w-full max-w-7xl relative z-10 min-h-0 mb-4">
+                <div className="lg:col-span-8 flex flex-col h-full min-h-[400px]">
+                    <div className={`flex-1 ${isTeamMode ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'flex justify-center'}`}>
+                        {isTeamMode ? (
+                            <>
+                                <TeamColumn
+                                    teamName="Đội Đỏ"
+                                    teamColor="red"
+                                    players={team1Players}
+                                    currentUserId={auth.id}
+                                    hostId={room.hostId}
+                                    onJoin={() => handleSwitchTeam(1)}
+                                    isTeamMode={true}
+                                />
+                                <TeamColumn
+                                    teamName="Đội Xanh"
+                                    teamColor="blue"
+                                    players={team2Players}
+                                    currentUserId={auth.id}
+                                    hostId={room.hostId}
+                                    onJoin={() => handleSwitchTeam(2)}
+                                    isTeamMode={true}
+                                />
+                            </>
+                        ) : (
+                            <div className="w-full">
+                                <TeamColumn
+                                    teamName="Danh Sách Chiến Binh"
+                                    teamColor="purple"
+                                    players={room.players}
+                                    currentUserId={auth.id}
+                                    hostId={room.hostId}
+                                    onJoin={() => { }}
+                                    isTeamMode={false}
+                                />
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
 
-            </div>
-
-            {/* Footer Actions */}
-            <div className="w-full max-w-4xl flex gap-4 sticky bottom-4 z-20 animate-fade-in">
-                <button
-                    onClick={handleLeaveRoom}
-                    className="flex-1 py-4 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold rounded-xl shadow-2xl transition-all transform hover:scale-105 active:scale-95"
-                >
-                    🚪 Rời Phòng
-                </button>
-
-                {isHost ? (
-                    <button
-                        onClick={handleStartGame}
-                        disabled={isTeamMode
-                            ? !(team1Players.length > 0 && team2Players.length > 0)
-                            : room.players.length < 2 // Ít nhất 2 người cho FFA (có thể sửa thành < 1 để test mình)
-                        }
-                        className={`flex-[2] py-5 text-white text-xl font-bold rounded-xl shadow-2xl transition-all transform 
-                            ${(isTeamMode
-                                ? (team1Players.length > 0 && team2Players.length > 0)
-                                : room.players.length >= 2)
-                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105 animate-pulse-glow'
-                                : 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed opacity-60'
-                            }`}
-
-                    >
-                        🚀 BẮT ĐẦU TRẬN ĐẤU
-                    </button>
-                ) : (
-                    <div className="flex-[2] py-5 bg-gradient-to-r from-gray-700 to-gray-800 text-gray-300 text-xl font-bold rounded-xl shadow-2xl text-center flex items-center justify-center gap-2 border-2 border-gray-600">
-                        <span className="animate-pulse">⏳</span> Đợi chủ phòng...
+                <div className="lg:col-span-4 flex flex-col gap-4 h-full">
+                    <div className="flex-1 bg-white/95 rounded-2xl shadow-xl overflow-hidden border-2 border-gray-200 flex flex-col min-h-[300px]">
+                        <ChatBox scope="ROOM" className="flex-1 h-full border-none shadow-none bg-transparent text-gray-800" />
                     </div>
-                )}
+
+                    <div className="flex flex-col gap-3">
+                        {isHost ? (
+                            <button
+                                onClick={handleStartGame}
+                                disabled={isTeamMode
+                                    ? (team1Players.length === 0 || team2Players.length === 0)
+                                    : room.players.length < 2
+                                }
+                                className={`w-full py-4 text-white text-xl font-bold rounded-xl shadow-2xl transition-all transform 
+                                    ${(isTeamMode
+                                        ? (team1Players.length > 0 && team2Players.length > 0)
+                                        : room.players.length >= 2)
+                                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:scale-105 animate-pulse-glow'
+                                        : 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed opacity-60'
+                                    }`}
+                            >
+                                🚀 BẮT ĐẦU TRẬN ĐẤU
+                            </button>
+                        ) : (
+                            <div className="w-full py-4 bg-gradient-to-r from-gray-700 to-gray-800 text-gray-300 text-lg font-bold rounded-xl shadow-2xl text-center flex items-center justify-center gap-2 border-2 border-gray-600">
+                                <span className="animate-pulse">⏳</span> Đợi chủ phòng...
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleLeaveRoom}
+                            className="w-full py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95"
+                        >
+                            🚪 Rời Phòng
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

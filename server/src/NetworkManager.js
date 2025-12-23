@@ -1,6 +1,8 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import AuthHandler from './handlers/AuthHandler.js';
 import RoomHandler from './handlers/RoomHandler.js';
+import ChatHandler from './handlers/ChatHandler.js'; 
+import { MESSAGE_TYPES } from './config/messageTypes.js';
 
 export default class NetworkManager {
     constructor(server, authManager) {
@@ -14,6 +16,7 @@ export default class NetworkManager {
         // Handlers sẽ được khởi tạo trong setManagers
         this.authHandler = null;
         this.roomHandler = null;
+        this.chatHandler = null;
     }
 
     setManagers(roomManager, gameManager) {
@@ -23,6 +26,7 @@ export default class NetworkManager {
         // Khởi tạo các Handler
         this.authHandler = new AuthHandler(this.authManager, this);
         this.roomHandler = new RoomHandler(this.roomManager, this);
+        this.chatHandler = new ChatHandler(this)
     }
 
     start() {
@@ -73,6 +77,14 @@ export default class NetworkManager {
         // Các message còn lại ném sang RoomHandler
         if (this.roomHandler) {
             await this.roomHandler.handle(ws, player, data);
+        }
+
+        // --- 4. ROUTING: CHAT MESSAGES ---
+        if (data.type === MESSAGE_TYPES.CHAT_MESSAGE) {
+            if (this.chatHandler) {
+                this.chatHandler.handle(ws, player, data);
+            }
+            return;
         }
     }
 

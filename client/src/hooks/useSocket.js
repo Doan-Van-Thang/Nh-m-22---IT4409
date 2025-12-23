@@ -48,8 +48,10 @@ export const useSocket = (url) => {
 
     const addMessageListener = useCallback((callback) => {
         if (socketRef.current) {
-            socketRef.current.addMessageListener(callback);
+            const removeListener = socketRef.current.addMessageListener(callback);
+            return removeListener;
         }
+        return () => {};
     }, []);
 
     return {

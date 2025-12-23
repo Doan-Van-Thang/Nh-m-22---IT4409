@@ -1,8 +1,9 @@
 // File: client/src/components/MainMenu.jsx
-import React, { useEffect, useState } from 'react'; // [SỬA] Import thêm useEffect và useState
+import React, { useEffect, useState } from 'react'; 
 import CreateRoomModal from './CreateRoomModal.jsx';
 import { getGameModeInfo } from '../config/gameModes';
-// === CÁC ICON (Sử dụng SVG placeholder, bạn có thể thay bằng thư viện icon) ===
+import ChatBox from './ChatBox';
+// === CÁC ICON  ===
 const BellIcon = () => (
     <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341A6.002 6.002 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -20,7 +21,7 @@ const CoinIcon = () => (
     </svg>
 );
 
-// [THÊM MỚI] Icon Đăng xuất
+// Icon Đăng xuất
 const LogoutIcon = () => (
     <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -28,12 +29,12 @@ const LogoutIcon = () => (
 );
 
 
-// ===== 1. COMPONENT GÓC TRÊN BÊN PHẢI (ĐÃ CẬP NHẬT) =====
-// [SỬA] Nhận props `auth` và `onLogout`
+// ===== 1. COMPONENT GÓC TRÊN BÊN PHẢI =====
+//  Nhận props `auth` và `onLogout`
 const UserProfile = ({ auth, onLogout }) => {
     return (
         <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-white to-gray-50 rounded-xl shadow-md animate-fade-in-down">
-            {/* [ENHANCED] Avatar with glow effect */}
+            {/*Avatar with glow effect */}
             <div className="relative">
                 <img
                     src={auth?.avatarUrl || '/avatar.png'}
@@ -43,10 +44,10 @@ const UserProfile = ({ auth, onLogout }) => {
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
             <div>
-                {/* [ENHANCED] Username with gradient */}
+                {/*Username with gradient */}
                 <div className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{auth?.name || 'Guest'}</div>
                 <div className="flex items-center text-sm">
-                    {/* [ENHANCED] Points with styling */}
+                    {/* Points with styling */}
                     <span className="font-semibold text-yellow-600">{auth?.highScore || 0}</span>
                     <span className="ml-1"><CoinIcon /></span>
                 </div>
@@ -57,7 +58,7 @@ const UserProfile = ({ auth, onLogout }) => {
             <button className="text-gray-500 hover:text-purple-600 p-2 rounded-full hover:bg-purple-50 transition-all duration-300 transform hover:scale-110">
                 <SettingsIcon />
             </button>
-            {/* [ENHANCED] Logout button */}
+            {/* Logout button */}
             <button
                 onClick={onLogout}
                 className="text-gray-500 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-all duration-300 transform hover:scale-110"
@@ -69,13 +70,13 @@ const UserProfile = ({ auth, onLogout }) => {
     );
 };
 
-// ===== 2. COMPONENT SIDEBAR (LEADERBOARD) (CẬP NHẬT) =====
+// ===== 2. COMPONENT SIDEBAR (LEADERBOARD) =====
 const Leaderboard = ({ leaderboard }) => {
     const users = leaderboard || [];
 
     return (
         <div className="w-full h-full bg-white/90 backdrop-blur-sm p-4 md:p-6 rounded-xl shadow-lg border border-white/50 flex flex-col">
-            
+
             {/* Header cố định */}
             <div className="flex-shrink-0 mb-4">
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -98,10 +99,10 @@ const Leaderboard = ({ leaderboard }) => {
                                     {/* Top 3 Styling */}
                                     <div className={`
                                         flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm
-                                        ${index === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-400' : 
-                                          index === 1 ? 'bg-gray-100 text-gray-700 ring-2 ring-gray-400' : 
-                                          index === 2 ? 'bg-orange-100 text-orange-800 ring-2 ring-orange-400' : 
-                                          'bg-white text-gray-500 border border-gray-200'}
+                                        ${index === 0 ? 'bg-yellow-100 text-yellow-700 ring-2 ring-yellow-400' :
+                                            index === 1 ? 'bg-gray-100 text-gray-700 ring-2 ring-gray-400' :
+                                                index === 2 ? 'bg-orange-100 text-orange-800 ring-2 ring-orange-400' :
+                                                    'bg-white text-gray-500 border border-gray-200'}
                                     `}>
                                         {index + 1}
                                     </div>
@@ -111,7 +112,7 @@ const Leaderboard = ({ leaderboard }) => {
                                         alt={user.name}
                                         className="w-10 h-10 rounded-full bg-gray-200 border border-gray-300 object-cover"
                                     />
-                                    
+
                                     <div className="flex flex-col min-w-0">
                                         {/* Truncate tên nếu quá dài */}
                                         <span className="font-bold text-gray-800 truncate max-w-[120px]">{user.name}</span>
@@ -137,8 +138,8 @@ const Leaderboard = ({ leaderboard }) => {
     );
 };
 
-// ===== 3. COMPONENT NỘI DUNG CHÍNH (DANH SÁCH PHÒNG) (ĐÃ CẬP NHẬT) =====
-// [SỬA] Nhận prop `onPlay`
+// ===== 3. COMPONENT NỘI DUNG CHÍNH (DANH SÁCH PHÒNG)  =====
+//  Nhận prop `onPlay`
 const RoomList = ({ onCreateRoom, onJoinRoom, roomList, auth, onOpenCreateModal }) => {
     return (
         <div className="p-6">
@@ -232,7 +233,7 @@ export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onL
 
     return (
         <div className="flex flex-col md:flex-row h-screen bg-gradient-to-br from-gray-100 via-blue-50 to-purple-50 relative overflow-hidden">
-            
+
             {/* Background Decorations */}
             <div className="absolute top-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float pointer-events-none"></div>
             <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-float pointer-events-none" style={{ animationDelay: '2s' }}></div>
@@ -256,7 +257,7 @@ export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onL
             {/*CỘT 2: NỘI DUNG CHÍNH (ROOM LIST) */}
             <main className="flex-1 flex flex-col relative z-10 h-full overflow-hidden">
                 <header className="flex justify-between items-center p-4 w-full bg-white/50 backdrop-blur-md md:bg-transparent">
-                    <button 
+                    <button
                         onClick={() => setShowMobileLeaderboard(!showMobileLeaderboard)}
                         className="md:hidden px-4 py-2 bg-white rounded-xl shadow-md text-blue-600 font-bold border border-blue-100 active:scale-95 transition-transform"
                     >
@@ -276,6 +277,9 @@ export default function MainMenu({ auth, onCreateRoom, onJoinRoom, roomList, onL
                         auth={auth}
                         onOpenCreateModal={() => setIsCreateModalOpen(true)}
                     />
+                </div>
+                <div className="p-4 pt-0">
+                    <ChatBox scope="GLOBAL" className="h-64 shadow-2xl" />
                 </div>
             </main>
         </div>

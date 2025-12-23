@@ -59,7 +59,10 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
             }
         };
 
-        socket.addMessageListener(handleGameOver);
+        const unsubscribe = socket.addMessageListener(handleGameOver);
+        return () => {
+            unsubscribe();
+        };
     }, [socket, navigateTo, SCREENS]);
 
     // Update stats from game instance (throttled to 200ms for performance)
@@ -116,7 +119,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas || !socket) return; // [SỬA] Chờ cả socket
+        if (!canvas || !socket) return; //Chờ cả socket
 
         const ctx = canvas.getContext('2d', { alpha: false });
 
@@ -132,9 +135,9 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         window.addEventListener('resize', handleResize);
 
         console.log("GameView: Khởi tạo Game...");
-        // [SỬA] Truyền socket đã có vào Game
+        //Truyền socket đã có vào Game
         gameInstanceRef.current = new Game(canvas, ctx, navigateTo, SCREENS, socket, initialMapData, initialPlayerSetup, initialGameState, toast);
-        // [SỬA] Game.js bây giờ sẽ tự start
+        //Game.js bây giờ sẽ tự start
         gameInstanceRef.current.start();
         console.log("GameView: Game đã bắt đầu.");
 
