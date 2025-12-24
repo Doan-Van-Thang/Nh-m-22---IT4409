@@ -148,7 +148,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                         </h1>
                         <p className="text-gray-500 text-sm mt-1">ID Phòng: <span className="font-mono font-bold bg-gray-100 px-2 py-1 rounded">{room.id}</span></p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                         <div className="text-3xl font-black bg-gradient-to-r from-gray-100 to-gray-200 px-5 py-3 rounded-xl shadow-lg border-2 border-gray-300">
                             {isTeamMode ? (
                                 <>
@@ -165,7 +165,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                         {isHost && (
                             <button
                                 onClick={() => setIsSettingsOpen(true)}
-                                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-5 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 transform hover:scale-105 active:scale-95"
+                                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-5 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 transform hover:scale-105 active:scale-95 text-nowrap"
                                 title="Cài đặt phòng"
                             >
                                 ⚙️ Chỉnh sửa
@@ -195,7 +195,7 @@ function LobbyScreen({ auth, room, socket, navigateTo, SCREENS, toast }) {
                         </div>
                     )}
                     {isHost && (
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 px-4 py-2 rounded-xl border-2 border-green-200 shadow-sm">
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 px-4 py-2 rounded-xl border-2 border-green-200 shadow-sm flex items-center justify-center">
                             <span className="text-xs text-green-700 font-bold">👑 Bạn là chủ phòng</span>
                         </div>
                     )}

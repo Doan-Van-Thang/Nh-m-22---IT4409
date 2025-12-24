@@ -52,12 +52,6 @@ const UserProfile = ({ auth, onLogout }) => {
                     <span className="ml-1"><CoinIcon /></span>
                 </div>
             </div>
-            <button className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-blue-50 transition-all duration-300 transform hover:scale-110">
-                <BellIcon />
-            </button>
-            <button className="text-gray-500 hover:text-purple-600 p-2 rounded-full hover:bg-purple-50 transition-all duration-300 transform hover:scale-110">
-                <SettingsIcon />
-            </button>
             {/* Logout button */}
             <button
                 onClick={onLogout}
@@ -82,7 +76,6 @@ const Leaderboard = ({ leaderboard }) => {
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-2">
                     🏆 Bảng Xếp Hạng
                 </h2>
-                <div className="h-1 w-20 bg-blue-500 rounded mt-2"></div>
             </div>
 
             {/* Danh sách cuộn (flex-1 overflow-y-auto) */}
@@ -95,7 +88,7 @@ const Leaderboard = ({ leaderboard }) => {
                     <ul className="space-y-2">
                         {users.map((user, index) => (
                             <li key={user._id || index} className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors border border-transparent hover:border-blue-100 group">
-                                <div className="flex items-center space-x-3 overflow-hidden">
+                                <div className="flex items-center space-x-3">
                                     {/* Top 3 Styling */}
                                     <div className={`
                                         flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm
