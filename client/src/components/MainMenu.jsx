@@ -120,13 +120,6 @@ const Leaderboard = ({ leaderboard }) => {
                     </ul>
                 )}
             </div>
-
-            {/* Footer cố định */}
-            <div className="flex-shrink-0 mt-4 pt-4 border-t border-gray-100">
-                <button className="w-full py-2 text-sm text-blue-600 font-semibold hover:bg-blue-50 rounded-lg transition-colors">
-                    Xem tất cả
-                </button>
-            </div>
         </div>
     );
 };
