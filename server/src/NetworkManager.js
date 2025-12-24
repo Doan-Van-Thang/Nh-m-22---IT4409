@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import AuthHandler from './handlers/AuthHandler.js';
 import RoomHandler from './handlers/RoomHandler.js';
-import ChatHandler from './handlers/ChatHandler.js'; 
+import ChatHandler from './handlers/ChatHandler.js';
 import { MESSAGE_TYPES } from './config/messageTypes.js';
 
 export default class NetworkManager {
@@ -12,7 +12,7 @@ export default class NetworkManager {
 
         this.roomManager = null;
         this.gameManager = null;
-        
+
         // Handlers sẽ được khởi tạo trong setManagers
         this.authHandler = null;
         this.roomHandler = null;
@@ -92,7 +92,9 @@ export default class NetworkManager {
         const player = this.clients.get(ws);
         if (player) {
             console.log(`[NetworkManager] Người chơi ${player.id} ngắt kết nối.`);
-            
+            if (this.chatHandler) {
+                this.chatHandler.removePlayer(player.id);
+            }
             // Logic giữ kết nối 30s
             const roomId = this.roomManager.playerToRoom.get(player.id);
             if (roomId) {
@@ -118,7 +120,7 @@ export default class NetworkManager {
     broadcastRoomList() {
         const rooms = this.roomManager.getRoomList();
         const payload = JSON.stringify({ type: 'roomListData', rooms: rooms });
-        
+
         this.wss.clients.forEach(client => {
             const player = this.clients.get(client);
             // Chỉ gửi cho người đang ở sảnh (chưa vào phòng)
@@ -131,16 +133,16 @@ export default class NetworkManager {
     broadcastToRoom(roomId, payload, excludeWs = null) {
         const room = this.roomManager.rooms.get(roomId);
         if (!room) return;
-        
+
         const message = (typeof payload === 'string') ? payload : JSON.stringify(payload);
-        
+
         this.clients.forEach((playerInfo, ws) => {
             if (ws !== excludeWs && room.players.has(playerInfo.id) && ws.readyState === WebSocket.OPEN) {
                 ws.send(message);
             }
         });
     }
-    
+
     // BroadcastGameState dùng trong GameLoop
     broadcastGameState(roomId, state) {
         this.broadcastToRoom(roomId, { type: 'update', ...state });
@@ -155,7 +157,7 @@ export default class NetworkManager {
             }
         }
     }
-    
+
     sendPointsUpdate(playerId, newPoints) {
         // Cập nhật điểm trong RAM
         for (const [ws, playerInfo] of this.clients.entries()) {
@@ -166,14 +168,14 @@ export default class NetworkManager {
         }
         // Gửi thông báo cho client
         this.sendToPlayer(playerId, { type: 'pointsUpdate', playerId, newPoints });
-        
+
         // Update cho phòng nếu đang ở trong
         const roomId = this.roomManager.playerToRoom.get(playerId);
         if (roomId) {
             const room = this.roomManager.rooms.get(roomId);
-            if(room) {
-                 room.updatePlayerPoints(playerId, newPoints);
-                 this.broadcastToRoom(roomId, { type: 'roomUpdate', room: room.getState() });
+            if (room) {
+                room.updatePlayerPoints(playerId, newPoints);
+                this.broadcastToRoom(roomId, { type: 'roomUpdate', room: room.getState() });
             }
         }
     }

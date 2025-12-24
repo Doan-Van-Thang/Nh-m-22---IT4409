@@ -37,6 +37,9 @@ export default class Room {
             const team2Count = this.countPlayersInTeam(2);
             teamId = (team1Count <= team2Count) ? 1 : 2;
         }
+        else {
+            teamId = null; 
+        }
         // For FFA modes (deathmatch, battleRoyale), teamId remains null
 
         const playerInfo = {
@@ -94,10 +97,12 @@ export default class Room {
     // Update room settings (only by host)
     updateSettings(newSettings) {
         const { gameMode, maxPlayers, bettingPoints } = newSettings;
+        let modeChanged = false;
 
         if (gameMode) {
             this.gameMode = gameMode;
             this.modeConfig = getGameModeConfig(gameMode); // Reload mode config
+            modeChanged = true;
         }
 
         if (maxPlayers && maxPlayers >= this.players.size) {
@@ -107,8 +112,38 @@ export default class Room {
         if (bettingPoints !== undefined) {
             this.bettingPoints = bettingPoints;
         }
+        if (modeChanged) {
+            this.reassignTeams();
+        }
 
         console.log(`[Room ${this.id}] Settings updated:`, { gameMode: this.gameMode, maxPlayers: this.maxPlayers, bettingPoints: this.bettingPoints });
+    }
+    reassignTeams() {
+        const playersArray = Array.from(this.players.values());
+        
+        if (this.modeConfig.teams) {
+            let count1 = 0;
+            let count2 = 0;
+            
+            playersArray.forEach(p => {
+                if (p.teamId !== 1 && p.teamId !== 2) {
+                    if (count1 <= count2) {
+                        p.teamId = 1;
+                        count1++;
+                    } else {
+                        p.teamId = 2;
+                        count2++;
+                    }
+                } else {
+                    if (p.teamId === 1) count1++;
+                    else count2++;
+                }
+            });
+        } else {
+            playersArray.forEach(p => {
+                p.teamId = null;
+            });
+        }
     }
 
     // Deduct betting points from all players (called when game starts)

@@ -18,7 +18,7 @@ export default class GameEngine {
         this.roomId = null;
         this.world = new World(this.mapConfig, this.gameMode);
         this.bulletManager = new BulletManager(this.world);
-        this.playerManager = new PlayerManager(this.world, this.bulletManager);
+        this.playerManager = new PlayerManager(this.world, this.bulletManager,this.modeConfig);
         this.powerUpManager = new PowerUpManager(this.world);
 
         this.networkManager = null;
@@ -425,7 +425,7 @@ export default class GameEngine {
         this.mapConfig = getMapForMode(this.gameMode);
         this.world = new World(this.mapConfig, this.gameMode);
         this.bulletManager = new BulletManager(this.world);
-        this.playerManager = new PlayerManager(this.world, this.bulletManager);
+        this.playerManager = new PlayerManager(this.world, this.bulletManager,this.modeConfig);
         this.powerUpManager = new PowerUpManager(this.world);
 
         // Reset state

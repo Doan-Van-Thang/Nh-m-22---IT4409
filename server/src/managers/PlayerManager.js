@@ -3,13 +3,14 @@ import { createId } from '../model/utils.js';
 
 const RESPAWNTIME = 3000;
 export default class PlayerManager {
-    constructor(world, bulletManager) {
+    constructor(world, bulletManager, modeConfig) {
         this.world = world;
         this.bulletManager = bulletManager;
+        this.modeConfig = modeConfig;
         this.players = new Map();
     }
 
-    addPlayer(playerId, teamId,name) {
+    addPlayer(playerId, teamId, name) {
 
         const spawn = this.world.getSpawnPoint(teamId);//Hồi sinh về đúng đội
         const player = new User(playerId, spawn.x, spawn.y, teamId, name);
@@ -22,7 +23,7 @@ export default class PlayerManager {
     }
 
     update() {
-        const {mapWidth, mapHeight } = this.world;
+        const { mapWidth, mapHeight } = this.world;
         const playersArray = Array.from(this.players.values());
 
         this.players.forEach((player) => {
@@ -32,8 +33,13 @@ export default class PlayerManager {
                 player.clampToMap(mapWidth, mapHeight); // Va chạm biên
             }
             else if (player.deathTime > 0) {
-                if (Date.now() - player.deathTime > RESPAWNTIME) {
-                    this.respawnPlayer(player);
+                const allowRespawn = this.modeConfig.respawn;
+                if (allowRespawn) {
+                    if (Date.now() - player.deathTime > RESPAWNTIME) {
+                        this.respawnPlayer(player);
+                    }
+                } else {
+
                 }
             }
         });
@@ -56,7 +62,7 @@ export default class PlayerManager {
                 if (distance < minDistance) {
                     // Tính độ lún (overlap)
                     const overlap = minDistance - distance;
-                    
+
                     // Tính góc đẩy
                     const angle = distance === 0 ? Math.random() * Math.PI * 2 : Math.atan2(dy, dx);
 
@@ -68,7 +74,7 @@ export default class PlayerManager {
 
                     p2.x -= pushX;
                     p2.y -= pushY;
-                    
+
                     p1.clampToMap(mapWidth, mapHeight);
                     p2.clampToMap(mapWidth, mapHeight);
                 }
@@ -126,7 +132,7 @@ export default class PlayerManager {
             return {
                 id: p.id,
                 teamId: p.teamId,
-                name:p.name,
+                name: p.name,
                 x: p.x,
                 y: p.y,
                 rotation: p.rotation,
