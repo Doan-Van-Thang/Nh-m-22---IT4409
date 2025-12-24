@@ -57,7 +57,6 @@ export default class AuthHandler {
                     try {
                         const leaderboard = await Account.find({})
                             .sort({ highScore: -1 })
-                            .limit(10)
                             .select('name province highScore avatarUrl');
                         
                         ws.send(JSON.stringify({
