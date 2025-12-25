@@ -413,7 +413,7 @@ export default class GameEngine {
         // Clean up after 5 seconds
         setTimeout(() => {
             if (this.networkManager && this.networkManager.gameManager) {
-                this.networkManager.gameManager.endGame(this.roomId);
+                this.networkManager.gameManager.endGame(this.roomId,winner);
             }
         }, 5000);
     }

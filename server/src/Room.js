@@ -145,10 +145,9 @@ export default class Room {
             });
         }
     }
-
-    // Deduct betting points from all players (called when game starts)
     async deductBettingPoints(authManager, networkManager) {
         if (this.bettingPoints === 0) return true;
+        this.playersBet.clear();
 
         const playerIds = Array.from(this.players.keys());
         for (const playerId of playerIds) {
@@ -177,32 +176,58 @@ export default class Room {
     }
 
     // Distribute winnings to winners (called when game ends)
-    async distributeBettingPoints(authManager, winningTeamId, networkManager) {
+    async distributeBettingPoints(authManager, winner, networkManager) {
         if (this.bettingPoints === 0) return;
 
-        const totalPot = this.bettingPoints * this.players.size;
-        const winners = Array.from(this.players.values()).filter(p => p.teamId === winningTeamId);
+        const totalPot = this.bettingPoints * this.playersBet.size;
+        let winners = [];
 
-        if (winners.length === 0) return;
-
-        const winningsPerPlayer = Math.floor(totalPot / winners.length);
-
-        for (const winner of winners) {
-            try {
-                const newPoints = await authManager.addPoints(winner.id, winningsPerPlayer);
-                console.log(`[Room ${this.id}] Player ${winner.name} won ${winningsPerPlayer} points`);
-
-                // Broadcast point update to the winner
-                if (networkManager) {
-                    networkManager.sendPointsUpdate(winner.id, newPoints);
-                }
-            } catch (error) {
-                console.error(`Failed to add points to winner ${winner.id}:`, error);
+        if (winner === null) {
+            // Trường hợp hòa hoặc lỗi: Hoàn tiền cho tất cả những ai đã cược
+            console.log(`[Room ${this.id}] Trận đấu hòa/hủy. Hoàn tiền cược.`);
+            for (const playerId of this.playersBet.keys()) {
+                const player = this.players.get(playerId);
+                if (player) winners.push(player);
             }
+        } 
+        else if (typeof winner === 'number') {
+            winners = Array.from(this.players.values()).filter(p => p.teamId === winner);
+        } 
+        else if (typeof winner === 'string') {// ở chế độ FFA hoặc Battle Royale
+            const winnerPlayer = this.players.get(winner);
+            if (winnerPlayer) winners.push(winnerPlayer);
         }
 
+        if (winners.length === 0) {
+            console.log(`[Room ${this.id}] Không tìm thấy người thắng để trao giải.`);
+            this.playersBet.clear();
+            return;
+        }
+
+        // Nếu hòa/hủy thì trả lại đúng số tiền cược, còn nếu thắng thì chia đều tổng quỹ
+        const prizePerPlayer = (winner === null) 
+            ? this.bettingPoints 
+            : Math.floor(totalPot / winners.length);
+
+        console.log(`[Room ${this.id}] Tổng giải: ${totalPot}. Chia cho ${winners.length} người. Mỗi người: ${prizePerPlayer}`);
+
+        const payoutPromises = winners.map(async (winP) => {
+            try {
+                // Cộng điểm thắng vào DB
+                const newPoints = await authManager.addPoints(winP.id, prizePerPlayer);
+                winP.highScore = newPoints; 
+                if (networkManager) {
+                    networkManager.sendPointsUpdate(winP.id, newPoints);
+                }
+            } catch (error) {
+                console.error(`Lỗi cộng điểm cho người thắng ${winP.id}:`, error);
+            }
+        });
+
+        await Promise.all(payoutPromises);
         this.playersBet.clear();
-    }    // Lấy thông tin phòng để gửi về client
+    }   
+     // Lấy thông tin phòng để gửi về client
     getState() {
         return {
             id: this.id,

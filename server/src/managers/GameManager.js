@@ -54,7 +54,7 @@ export default class GameManager {
     }
 
     // Xóa game khi kết thúc
-    endGame(roomId) {
+    async endGame(roomId, winner) {
         const game = this.activeGames.get(roomId);
         if (game) {
             game.stop();
@@ -64,9 +64,25 @@ export default class GameManager {
             // Reset room status back to waiting so a new game can be started
             const room = this.networkManager.roomManager.rooms.get(roomId);
             if (room) {
+                if (room.bettingPoints > 0) {
+                    try {
+                        console.log(`[GameManager] Đang tính toán trả thưởng cho phòng ${roomId}...`);
+                        await room.distributeBettingPoints(
+                            this.networkManager.authManager, 
+                            winner, 
+                            this.networkManager
+                        );
+                    } catch (err) {
+                        console.error(`[GameManager] Lỗi khi trả thưởng:`, err);
+                    }
+                }
                 room.status = 'waiting';
                 console.log(`[GameManager] Đã reset trạng thái phòng ${roomId} về 'waiting'.`);
                 this.networkManager.broadcastRoomList();
+                this.networkManager.broadcastToRoom(roomId, {
+                    type: 'roomUpdate',
+                    room: room.getState()
+                });
             }
         }
     }
