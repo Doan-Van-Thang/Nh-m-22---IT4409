@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Game } from '../game/Game.js';
 import MiniMap from './MiniMap.jsx';
 import { getGameModeInfo } from '../config/gameModes.js';
+import { useGameMusic } from '../hooks/useAudio.js';
 
 const formatTime = (seconds) => {
     if (seconds === undefined || seconds === null || seconds < 0) return "0:00";
@@ -29,6 +30,30 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
         timeRemaining: 0,
         isTeamMode: true
     });
+
+    // Hook quản lý nhạc nền
+    const { startMusic, stopMusic, toggleMute, setVolume, isMuted, volume, isPlaying } = useGameMusic();
+    const musicStartedRef = useRef(false);
+
+    // Bắt đầu nhạc nền khi game bắt đầu (sau countdown) - chỉ 1 lần
+    useEffect(() => {
+        if (gameStarted && !gameOver && !musicStartedRef.current) {
+            musicStartedRef.current = true;
+            startMusic();
+        }
+    }, [gameStarted, gameOver, startMusic]);
+
+    // Dừng nhạc khi game over hoặc rời game
+    useEffect(() => {
+        if (gameOver) {
+            stopMusic();
+            musicStartedRef.current = false;
+        }
+        return () => {
+            stopMusic();
+            musicStartedRef.current = false;
+        };
+    }, [gameOver, stopMusic]);
 
     // Countdown timer before match starts
     useEffect(() => {
@@ -82,11 +107,11 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                     // Calculate team scores
                     let team1Kills = 0;
                     let team2Kills = 0;
-                    if(isCaptureFlag){
+                    if (isCaptureFlag) {
                         team1Kills = modeState.captures ? modeState.captures[1] : 0;
                         team2Kills = modeState.captures ? modeState.captures[2] : 0;
                     }
-                    else if ( game.gameMode === 'kingOfHill' ) {
+                    else if (game.gameMode === 'kingOfHill') {
                         team1Kills = modeState.teamScores ? modeState.teamScores[1] : 0;
                         team2Kills = modeState.teamScores ? modeState.teamScores[2] : 0;
                     }
@@ -102,7 +127,7 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                         kills: myTank.state.kills || 0,
                         deaths: myTank.state.deaths || 0,
                         score: myTank.state.score || 0,
-                        health: Math.max(0,myTank.state.health) || 100,
+                        health: Math.max(0, myTank.state.health) || 100,
                         ammo: 10,
                         teamScore: { team1: team1Kills, team2: team2Kills },
                         timeRemaining: modeState.remainingTime,
@@ -213,6 +238,31 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                     <span className="text-2xl">⏱️</span>
                     <span>{formatTime(gameStats.timeRemaining)}</span>
                 </div>
+
+                {/* Nút điều khiển âm thanh */}
+                <button
+                    onClick={toggleMute}
+                    className="pointer-events-auto bg-gray-800/80 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded-xl border-2 border-gray-600 shadow-lg backdrop-blur-sm transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2"
+                    title={isMuted ? "Bật nhạc" : "Tắt nhạc"}
+                >
+                    <span className="text-xl">{isMuted ? '🔇' : '🔊'}</span>
+                </button>
+
+                {/* Thanh điều chỉnh âm lượng */}
+                {!isMuted && (
+                    <div className="pointer-events-auto flex items-center gap-2 bg-gray-800/80 px-3 py-2 rounded-xl border-2 border-gray-600 backdrop-blur-sm">
+                        <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.1"
+                            value={volume}
+                            onChange={(e) => setVolume(parseFloat(e.target.value))}
+                            className="w-20 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                    </div>
+                )}
+
                 <button
                     onClick={handleLeaveGame}
                     className="pointer-events-auto bg-red-600/80 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl border-2 border-red-400 shadow-lg backdrop-blur-sm transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 h-full"
@@ -230,37 +280,37 @@ function GameView({ socket, navigateTo, SCREENS, initialMapData, initialPlayerSe
                     {/* Team Scores */}
                     {gameStats.isTeamMode ? (
                         <div className="glass-dark px-6 py-3 rounded-xl flex items-center gap-4">
-            {/* ĐỘI ĐỎ */}
-            <div className="text-center">
-                <div className="text-red-400 font-bold text-2xl flex items-center justify-center gap-2">
-                    {/* Nếu là Cướp Cờ thì hiện icon Cờ */}
-                    {gameStats.gameMode === 'captureFlag' && <span className="text-xl">🚩</span>}
-                    {gameStats.gameMode === 'kingOfHill' && <span className="text-xl">👑</span>}
-                    {Math.floor(gameStats.teamScore.team1)}
-                </div>
-                <div className="text-xs text-gray-400 font-bold tracking-wider">
-                    {/* Đổi chữ RED TEAM thành CAPTURES nếu là chế độ cờ */}
-                    {gameStats.gameMode === 'kingOfHill' ? '/ 1000 PTS' : 
-                 gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'RED TEAM'}
-                </div>
-            </div>
+                            {/* ĐỘI ĐỎ */}
+                            <div className="text-center">
+                                <div className="text-red-400 font-bold text-2xl flex items-center justify-center gap-2">
+                                    {/* Nếu là Cướp Cờ thì hiện icon Cờ */}
+                                    {gameStats.gameMode === 'captureFlag' && <span className="text-xl">🚩</span>}
+                                    {gameStats.gameMode === 'kingOfHill' && <span className="text-xl">👑</span>}
+                                    {Math.floor(gameStats.teamScore.team1)}
+                                </div>
+                                <div className="text-xs text-gray-400 font-bold tracking-wider">
+                                    {/* Đổi chữ RED TEAM thành CAPTURES nếu là chế độ cờ */}
+                                    {gameStats.gameMode === 'kingOfHill' ? '/ 1000 PTS' :
+                                        gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'RED TEAM'}
+                                </div>
+                            </div>
 
-            {/* VS */}
-            <div className="text-white text-xl opacity-50 font-bold mx-2">VS</div>
+                            {/* VS */}
+                            <div className="text-white text-xl opacity-50 font-bold mx-2">VS</div>
 
-            {/* ĐỘI XANH */}
-            <div className="text-center">
-                <div className="text-blue-400 font-bold text-2xl flex items-center justify-center gap-2">
-                    {Math.floor(gameStats.teamScore.team2)}
-                    {gameStats.gameMode === 'captureFlag' && <span className="text-xl">🚩</span>}
-                    {gameStats.gameMode === 'kingOfHill' && <span className="text-xl">👑</span>}
-                </div>
-                <div className="text-xs text-gray-400 font-bold tracking-wider">
-                    {gameStats.gameMode === 'kingOfHill' ? '/ 1000 PTS' : 
-                 gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'BLUE TEAM'}
-                </div>
-            </div>
-        </div>
+                            {/* ĐỘI XANH */}
+                            <div className="text-center">
+                                <div className="text-blue-400 font-bold text-2xl flex items-center justify-center gap-2">
+                                    {Math.floor(gameStats.teamScore.team2)}
+                                    {gameStats.gameMode === 'captureFlag' && <span className="text-xl">🚩</span>}
+                                    {gameStats.gameMode === 'kingOfHill' && <span className="text-xl">👑</span>}
+                                </div>
+                                <div className="text-xs text-gray-400 font-bold tracking-wider">
+                                    {gameStats.gameMode === 'kingOfHill' ? '/ 1000 PTS' :
+                                        gameStats.gameMode === 'captureFlag' ? 'CAPTURES' : 'BLUE TEAM'}
+                                </div>
+                            </div>
+                        </div>
                     ) : (<div></div>)}
                     {/* Player Stats */}
                     <div className="glass-dark px-6 py-3 rounded-xl">
